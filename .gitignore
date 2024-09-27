@@ -1,4 +1,5 @@
 *.bak
+output/*
 
 # Temp file created by my editor
 0README.html
