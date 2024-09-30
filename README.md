@@ -4,3 +4,12 @@ Plotting bird sightings from eBird
 # Citations
 Bird sighting data comes from eBird (SAMPLE data set as of 9/26/2024):
 eBird Basic Dataset. Version: EBD_rel$VERSION. Cornell Lab of Ornithology, Ithaca, New York. $DATE.
+
+# Development Notes
+
+PROBLEMS
+* Need to re-index the dataframes before saving as CSV, so they can be imported
+
+TODO
+* Move "normalization" script to a simple .py or maybe the math-ena module, and don't call it "normalization".
+* Probably make all table and column names lowercase
