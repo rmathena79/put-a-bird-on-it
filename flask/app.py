@@ -64,7 +64,7 @@ def snames():
 
 @app.route("/api/v1.0/sightings/<offset>")
 def sightings(offset):
-    MAX_RESULTS = 10
+    MAX_RESULTS = 1000
     session = Session(engine)
     results = session.query(sightings_tbl.common_name, sightings_tbl.scientific_name, sightings_tbl.latitude, 
                             sightings_tbl.longitude).offset(offset).limit(MAX_RESULTS).all()

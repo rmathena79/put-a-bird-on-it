@@ -11,10 +11,6 @@ In addition to a standard "dev" environment from class, you'll need to install p
 
 # Development Notes
 
-PROBLEMS
-* None... at the moment
-
 TODO
 * Move "normalization" script to a simple .py or maybe the math-ena module, and don't call it "normalization".
 * Probably make all table and column names lowercase
-* Make ID replacement more efficient by building up one big dictionary of replacement mappings
