@@ -10,7 +10,7 @@ CREATE TABLE scientific_names (
 
 CREATE TABLE common_names (
     id INT PRIMARY KEY,
-    scientific_name VARCHAR(128) NOT NULL
+    common_name VARCHAR(128) NOT NULL
 );
 
 CREATE TABLE sightings (

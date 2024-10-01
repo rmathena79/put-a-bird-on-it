@@ -1,4 +1,6 @@
 *.bak
+scratch.ipynb
+flask/credentials.py
 output/*
 
 # Temp file created by my editor

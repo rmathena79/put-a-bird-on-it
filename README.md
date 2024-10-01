@@ -5,6 +5,10 @@ Plotting bird sightings from eBird
 Bird sighting data comes from eBird (SAMPLE data set as of 9/26/2024):
 eBird Basic Dataset. Version: EBD_rel$VERSION. Cornell Lab of Ornithology, Ithaca, New York. $DATE.
 
+# Instructions
+
+In addition to a standard "dev" environment from class, you'll need to install psycopg2 for sqlalchemty to connect to postgresql.
+
 # Development Notes
 
 PROBLEMS
