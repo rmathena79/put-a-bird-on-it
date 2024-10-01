@@ -46,6 +46,7 @@ function getNextBirds(response) {
   // You'll get a response with length==0 when you run out of results
   if (response.length > 0) {
     totalCount += response.length;
+    console.log(`Got ${response.length} sightings; new total ${totalCount}`);
     for (let i = 0; i < response.length; i++) {
       let r = response[i];
       let cname_id = r.common_name;
@@ -54,14 +55,18 @@ function getNextBirds(response) {
       let lon = r.longitude;
       let cname = cnames.get(cname_id);
       let sname = snames.get(sname_id);
+      let date = r.observation_date;
 
       // Add a new marker to the cluster group, and bind a popup.
-      let descriptor = `${cname} (${sname})`;
+      let descriptor = `${cname} (${sname})<BR>Sighted on ${date.toDateString()}`;
       markers.addLayer(L.marker([lat, lon]).bindPopup(descriptor));
     }
 
     // Get the next batch
     d3.json(`${baseURL}/sightings/${totalCount}`).then(getNextBirds);
+  }
+  else {
+    console.log(`Finished getting sightings; total ${totalCount}`);
   }
 }
 

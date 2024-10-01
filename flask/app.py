@@ -4,10 +4,12 @@ import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
-
 from flask import Flask, jsonify
 
 from credentials import SERVER, PORT, USER, PASSWORD, DATABASE
+
+MAX_SIGHTINGS = 1000
+
 
 # Set up connection to database
 engine = create_engine(f'postgresql://{USER}:{PASSWORD}@{SERVER}:{PORT}/{DATABASE}')
@@ -35,16 +37,18 @@ def welcome():
     """List all available api routes."""
     return (
         f"Available Routes:<br/>"
-        f"/api/v1.0/common_names<br/>"
-        f"/api/v1.0/scientific_names<br/>"
-        f"/api/v1.0/sightings/&ltoffset&gt<br/>"
+        f"<ul>"
+        f"<li><B>/api/v1.0/common_names</B>: Get ALL common names and IDs</li>"
+        f"<li><B>/api/v1.0/scientific_names</B>: Get ALL scientific names and IDs</li>"
+        f"<li><B>/api/v1.0/dates</B>: Get min and max dates with available sightings</li>"
+        f"<li><B>/api/v1.0/count/&ltmin-date&gt/&ltmax-date&gt</B>: Get number of sightings available in specified date range</li>"
+        f"<li><B>/api/v1.0/sightings/&ltoffset&gt/&ltmin-date&gt/&ltmax-date&gt</B>: Get sighting data {MAX_SIGHTINGS} events at a time, offset as specified and within date range</li>"
     )
 
 @app.route("/api/v1.0/common_names")
-def cnames():
-    session = Session(engine)
-    results = session.query(cnames_tbl.id, cnames_tbl.common_name).all()
-    session.close()
+def get_cnames():
+    with Session(engine) as session:
+        results = session.query(cnames_tbl.id, cnames_tbl.common_name).all()
 
     results_dicts = [r._asdict() for r in results]
     response = jsonify(results_dicts)
@@ -52,23 +56,32 @@ def cnames():
     return response
 
 @app.route("/api/v1.0/scientific_names")
-def snames():
-    session = Session(engine)
-    results = session.query(snames_tbl.id, snames_tbl.scientific_name).all()
-    session.close()
-
+def get_snames():
+    with Session(engine) as session:
+        results = session.query(snames_tbl.id, snames_tbl.scientific_name).all()
+    
     results_dicts = [r._asdict() for r in results]
     response = jsonify(results_dicts)
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
+@app.route("/api/v1.0/dates")
+def get_dates():
+    with Session(engine) as session:
+        min = session.query(func.min(sightings_tbl.observation_date)).scalar()
+        max = session.query(func.max(sightings_tbl.observation_date)).scalar()
+
+    results_dict = {'min': min, 'max': max}
+    response = jsonify(results_dict)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
 @app.route("/api/v1.0/sightings/<offset>")
-def sightings(offset):
-    MAX_RESULTS = 1000
-    session = Session(engine)
-    results = session.query(sightings_tbl.common_name, sightings_tbl.scientific_name, sightings_tbl.latitude, 
-                            sightings_tbl.longitude).offset(offset).limit(MAX_RESULTS).all()
-    session.close()
+def get_sightings(offset):
+    with Session(engine) as session:
+        results = session.query(sightings_tbl.common_name, sightings_tbl.scientific_name, 
+                                sightings_tbl.latitude, sightings_tbl.longitude,
+                                sightings_tbl.observation_date).offset(offset).limit(MAX_SIGHTINGS).all()
 
     results_dicts = [r._asdict() for r in results]
     response = jsonify(results_dicts)
