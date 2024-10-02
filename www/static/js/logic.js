@@ -156,7 +156,7 @@ function getFormattedQueryDates() {
 }
 
 function simpleDateFormat(date) {
-  return `${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`
+  return `${date.getUTCFullYear()}-${date.getUTCMonth()+1}-${date.getUTCDate()}`
 }
 
 function applyFilters() {
@@ -164,6 +164,7 @@ function applyFilters() {
   console.log(`Apply filter ${filterDates.start} - ${filterDates.end}`)
   filterEndDate = filterDates.end;
   filterStartDate = filterDates.start;
+  //!!! Need to clear old markers
   getAllBirds();
 }
 
