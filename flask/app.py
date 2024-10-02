@@ -8,7 +8,7 @@ from flask import Flask, jsonify
 
 from credentials import SERVER, PORT, USER, PASSWORD, DATABASE
 
-MAX_SIGHTINGS = 1000
+MAX_SIGHTINGS = 3333
 
 
 # Set up connection to database
@@ -76,9 +76,21 @@ def get_dates():
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
+@app.route("/api/v1.0/count/<min_date>/<max_date>")
+def get_sighting_count(min_date, max_date):
+    with Session(engine) as session:
+        results = session.query(sightings_tbl.common_name, sightings_tbl.scientific_name, 
+                                sightings_tbl.latitude, sightings_tbl.longitude,
+                                sightings_tbl.observation_date) \
+                                .filter(sightings_tbl.observation_date.between(min_date, max_date)) \
+                                .count()
+
+    response = jsonify(results)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
 @app.route("/api/v1.0/sightings/<offset>/<min_date>/<max_date>")
 def get_sightings(offset, min_date, max_date):
-    app.logger.info(f'Get sightings: {offset}, {min_date}, {max_date}')
     with Session(engine) as session:
         results = session.query(sightings_tbl.common_name, sightings_tbl.scientific_name, 
                                 sightings_tbl.latitude, sightings_tbl.longitude,

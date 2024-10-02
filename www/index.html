@@ -1,39 +1,60 @@
 <!DOCTYPE html>
 <html lang="en-us">
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Marker Clusters</title>
-    
+
     <!-- Leaflet JavaScript code -->
-    <script src="https://unpkg.com/leaflet@1.3.3/dist/leaflet.js"
-    integrity="sha512-tAGcCfR4Sc5ZP5ZoVz0quoZDYX5aCtEm/eu1KhSLj2c9eFrylXZknQYmxUssFaVJKvvc0dJQixhGjG2yXWiV9Q=="
-    crossorigin=""></script>
-    
+    <script
+      src="https://unpkg.com/leaflet@1.3.3/dist/leaflet.js"
+      integrity="sha512-tAGcCfR4Sc5ZP5ZoVz0quoZDYX5aCtEm/eu1KhSLj2c9eFrylXZknQYmxUssFaVJKvvc0dJQixhGjG2yXWiV9Q=="
+      crossorigin=""
+    ></script>
+
     <!-- D3 library -->
     <script src="https://d3js.org/d3.v5.min.js"></script>
 
     <!-- Marker cluster JavaScript code -->
-    <script type="text/javascript" src="https://unpkg.com/leaflet.markercluster@1.0.3/dist/leaflet.markercluster.js"></script>
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/leaflet.markercluster@1.0.3/dist/leaflet.markercluster.js"
+    ></script>
 
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.3/dist/leaflet.css"
-    integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
-    crossorigin=""/>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.3.3/dist/leaflet.css"
+      integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
+      crossorigin=""
+    />
 
     <!-- Marker cluster CSS -->
-    <link rel="stylesheet" type="text/css" href="https://unpkg.com/leaflet.markercluster@1.0.3/dist/MarkerCluster.css">
-    <link rel="stylesheet" type="text/css" href="https://unpkg.com/leaflet.markercluster@1.0.3/dist/MarkerCluster.Default.css">
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://unpkg.com/leaflet.markercluster@1.0.3/dist/MarkerCluster.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://unpkg.com/leaflet.markercluster@1.0.3/dist/MarkerCluster.Default.css"
+    />
 
     <!-- Our CSS -->
-    <link rel="stylesheet" type="text/css" href="static/css/style.css">
-
+    <link rel="stylesheet" type="text/css" href="static/css/style.css" />
   </head>
   <body>
-
-    <div id="map"></div>
+      <div style="float: left; width: 20%; height: 100%">
+        <P>eBird Board!</P>
+        <P>Sighting data comes from the eBird Basic Dataset. Version: EBD_relAug-2024. Cornell Lab of Ornithology, Ithaca, New York. Aug 2024.</P>
+        <P>The database is loaded with <span id="max-overall-count">[]</span> bird sightings from <span id="min-overall-date">[]</span> to <span id="max-overall-date">[]</span></P>
+        <P>Currently showing <span id="current-count">[]</span> of <span id="max-current-count">[]</span> sightings from <span id="min-current-date">[]</span> to <span id="max-current-date">[]</span></P>
+      </div>
+      <div style="float: right; width: 80%; height: 100%">
+        <div id="map"></div>
+      </div>
 
     <!-- Our JavaScript -->
     <script type="text/javascript" src="static/js/logic.js"></script>
-
   </body>
 </html>

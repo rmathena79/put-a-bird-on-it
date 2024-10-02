@@ -13,8 +13,12 @@ In addition to a standard "dev" environment from class, you'll need to install p
 
 PROBLEMS
 * Dependency between dates and getting initial sightings is enforced with only a sleep
+* Where'd my map go?
 
 TODO
+* Do something good while loading large amounts of data
+* Show the count
+* Consolidate redundant code
 * Ideally eBird citation data should come from the database, since it could vary depending on dataset.
 * Move "normalization" script to a simple .py or maybe the math-ena module, and don't call it "normalization".
 * Probably make all table and column names lowercase

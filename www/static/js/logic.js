@@ -13,10 +13,12 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 // Store the API query variables.
 let baseURL = "http://127.0.0.1:5000/api/v1.0";
 
+// More-or-less unchanging values we get as the page first loads:
 let cnames = new Map();
 let snames = new Map();
 let min_date = null;
 let max_date = null;
+let max_overall_count = 0;
 
 function getStaticInfo() {
   console.log("Getting common names");
@@ -39,11 +41,24 @@ function getStaticInfo() {
     console.log(`Got ${snames.size} scientific names`);
   });
 
-  console.log("Getting key dates...");
+  console.log("Getting key dates");
   d3.json(`${baseURL}/dates`).then(function (response) {
     min_date = new Date(response.min);
     max_date = new Date(response.max);
-    console.log(`Got dates, min:${min_date.toUTCString()}, max:${max_date.toUTCString()}`);
+
+    d3.select("#min-overall-date").text(simpleDateFormat(min_date));
+    d3.select("#max-overall-date").text(simpleDateFormat(max_date));
+
+    console.log(`Got dates, min:${simpleDateFormat(min_date)}, max:${simpleDateFormat(max_date)}`);
+  });
+
+  console.log("Getting max count");
+  d3.json(`${baseURL}/count/1900-01-01/2345-12-31`).then(function (response) {
+    max_overall_count = response;
+
+    d3.select("#max-overall-count").text(max_overall_count);
+
+    console.log(`Got max overall count: ${max_overall_count}`);
   });
 }
 
@@ -56,6 +71,8 @@ function getNextBirds(response) {
   if (response.length > 0) {
     totalCount += response.length;
     console.log(`Got ${response.length} sightings; new total ${totalCount}`);
+    d3.select("#current-count").text(totalCount);
+
     for (let i = 0; i < response.length; i++) {
       let r = response[i];
       let cname_id = r.common_name;
@@ -67,7 +84,7 @@ function getNextBirds(response) {
       let date = new Date(r.observation_date);
 
       // Add a new marker to the cluster group, and bind a popup.
-      let descriptor = `${cname} (${sname})<BR>Sighted on ${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`;
+      let descriptor = `${cname} (${sname})<BR>Sighted on ${simpleDateFormat(date)}`;
       markers.addLayer(L.marker([lat, lon]).bindPopup(descriptor));
     }
 
@@ -92,8 +109,17 @@ async function getAllBirds() {
   await sleep(1000);
   markers = L.markerClusterGroup();
   totalCount = 0;
-  d3.json(`${getSightingsURL(totalCount)}`).then(getNextBirds);
-  console.log(getFormattedQueryDates());
+
+  dates = getFormattedQueryDates();
+  d3.select("#current-count").text(totalCount);
+  d3.select("#min-current-date").text(dates.get('min'));
+  d3.select("#max-current-date").text(dates.get('max'));
+
+  d3.json(`${baseURL}/count/${dates.get('min')}/${dates.get('max')}`).then(function (response) {
+    d3.select("#max-current-count").text(response);
+  });
+
+  d3.json(`${getSightingsURL(totalCount)}`).then(getNextBirds);  
 
   // Add our marker cluster layer to the map.
   myMap.addLayer(markers);
@@ -108,11 +134,14 @@ function addDays(date, days) {
 
 function getFormattedQueryDates() {
   result = new Map();
-  let min = addDays(max_date, -7);
-  result.set('min', `${min.getUTCFullYear()}-${min.getUTCMonth()}-${min.getUTCDate()}`);
-  result.set('max', `${max_date.getUTCFullYear()}-${max_date.getUTCMonth()}-${max_date.getUTCDate()}`);
-  console.log(`min: ${min}, max: ${max_date}`);
+  let min = addDays(max_date, -2);
+  result.set('min', `${simpleDateFormat(min)}`);
+  result.set('max', `${simpleDateFormat(max_date)}`);
   return result;
+}
+
+function simpleDateFormat(date) {
+  return `${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`
 }
 
 getStaticInfo();
