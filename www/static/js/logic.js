@@ -1,3 +1,13 @@
+// Store the API query variables.
+let baseURL = "http://127.0.0.1:5000/api/v1.0";
+
+// More-or-less unchanging values we get as the page first loads:
+let cnames = new Map();
+let snames = new Map();
+let min_date = null;
+let max_date = null;
+let max_overall_count = 0;
+
 // Creating the map object
 let myMap = L.map("map", {
   center: [43.8041, -120.5542], // central Oregon
@@ -10,15 +20,14 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 }).addTo(myMap);
 
-// Store the API query variables.
-let baseURL = "http://127.0.0.1:5000/api/v1.0";
+// Date picker controls, linked together to enforce a date range.
+// These are set up after database min/max dates are available
+let minPicker = null;
+let maxPicker = null;
 
-// More-or-less unchanging values we get as the page first loads:
-let cnames = new Map();
-let snames = new Map();
-let min_date = null;
-let max_date = null;
-let max_overall_count = 0;
+// Filter dates are saved as Date objects
+let filterStartDate = null;
+let filterEndDate = null;
 
 function getStaticInfo() {
   console.log("Getting common names");
@@ -50,6 +59,13 @@ function getStaticInfo() {
     d3.select("#max-overall-date").text(simpleDateFormat(max_date));
 
     console.log(`Got dates, min:${simpleDateFormat(min_date)}, max:${simpleDateFormat(max_date)}`);
+
+    console.log('Setting up date pickers')
+    minPicker = datepicker('#min-date-picker', { id: 1, startDate: min_date });
+    maxPicker = datepicker('#max-date-picker', { id: 1, startDate: max_date });
+
+    filterEndDate = max_date;
+    filterStartDate = addDays(max_date, -2);
   });
 
   console.log("Getting max count");
@@ -106,7 +122,7 @@ function getSightingsURL(offset) {
 }
 
 async function getAllBirds() {
-  await sleep(1000);
+  await sleep(3000);
   markers = L.markerClusterGroup();
   totalCount = 0;
 
@@ -134,9 +150,8 @@ function addDays(date, days) {
 
 function getFormattedQueryDates() {
   result = new Map();
-  let min = addDays(max_date, -2);
-  result.set('min', `${simpleDateFormat(min)}`);
-  result.set('max', `${simpleDateFormat(max_date)}`);
+  result.set('min', `${simpleDateFormat(filterStartDate)}`);
+  result.set('max', `${simpleDateFormat(filterEndDate)}`);
   return result;
 }
 
@@ -144,6 +159,13 @@ function simpleDateFormat(date) {
   return `${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`
 }
 
+function applyFilters() {
+  filterDates = minPicker.getRange()
+  console.log(`Apply filter ${filterDates.start} - ${filterDates.end}`)
+  filterEndDate = filterDates.end;
+  filterStartDate = filterDates.start;
+  getAllBirds();
+}
+
 getStaticInfo();
 getAllBirds();
-
