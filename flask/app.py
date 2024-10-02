@@ -42,7 +42,7 @@ def welcome():
         f"<li><B>/api/v1.0/scientific_names</B>: Get ALL scientific names and IDs</li>"
         f"<li><B>/api/v1.0/dates</B>: Get min and max dates with available sightings</li>"
         f"<li><B>/api/v1.0/count/&ltmin-date&gt/&ltmax-date&gt</B>: Get number of sightings available in specified date range</li>"
-        f"<li><B>/api/v1.0/sightings/&ltoffset&gt/&ltmin-date&gt/&ltmax-date&gt</B>: Get sighting data {MAX_SIGHTINGS} events at a time, offset as specified and within date range</li>"
+        f"<li><B>/api/v1.0/sightings/&ltoffset&gt/&ltmin-date&gt/&ltmax-date&gt</B>: Get sighting data {MAX_SIGHTINGS} events at a time, offset as specified and within date range (YYYY-MM-DD)</li>"
     )
 
 @app.route("/api/v1.0/common_names")
@@ -76,12 +76,15 @@ def get_dates():
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
-@app.route("/api/v1.0/sightings/<offset>")
-def get_sightings(offset):
+@app.route("/api/v1.0/sightings/<offset>/<min_date>/<max_date>")
+def get_sightings(offset, min_date, max_date):
+    app.logger.info(f'Get sightings: {offset}, {min_date}, {max_date}')
     with Session(engine) as session:
         results = session.query(sightings_tbl.common_name, sightings_tbl.scientific_name, 
                                 sightings_tbl.latitude, sightings_tbl.longitude,
-                                sightings_tbl.observation_date).offset(offset).limit(MAX_SIGHTINGS).all()
+                                sightings_tbl.observation_date) \
+                                .filter(sightings_tbl.observation_date.between(min_date, max_date)) \
+                                .offset(offset).limit(MAX_SIGHTINGS).all()
 
     results_dicts = [r._asdict() for r in results]
     response = jsonify(results_dicts)

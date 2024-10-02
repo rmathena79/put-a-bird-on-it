@@ -15,8 +15,10 @@ let baseURL = "http://127.0.0.1:5000/api/v1.0";
 
 let cnames = new Map();
 let snames = new Map();
+let min_date = null;
+let max_date = null;
 
-function getAllNames() {
+function getStaticInfo() {
   console.log("Getting common names");
   d3.json(`${baseURL}/common_names`).then(function (response) {
     for (let i = 0; i < response.length; i++) {
@@ -35,7 +37,14 @@ function getAllNames() {
       snames.set(id, sname);
     }
     console.log(`Got ${snames.size} scientific names`);
-  });  
+  });
+
+  console.log("Getting key dates...");
+  d3.json(`${baseURL}/dates`).then(function (response) {
+    min_date = new Date(response.min);
+    max_date = new Date(response.max);
+    console.log(`Got dates, min:${min_date.toUTCString()}, max:${max_date.toUTCString()}`);
+  });
 }
 
 // These get reset when starting to download sightings, and updated asynchronously
@@ -55,29 +64,57 @@ function getNextBirds(response) {
       let lon = r.longitude;
       let cname = cnames.get(cname_id);
       let sname = snames.get(sname_id);
-      let date = r.observation_date;
+      let date = new Date(r.observation_date);
 
       // Add a new marker to the cluster group, and bind a popup.
-      let descriptor = `${cname} (${sname})<BR>Sighted on ${date.toDateString()}`;
+      let descriptor = `${cname} (${sname})<BR>Sighted on ${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`;
       markers.addLayer(L.marker([lat, lon]).bindPopup(descriptor));
     }
 
     // Get the next batch
-    d3.json(`${baseURL}/sightings/${totalCount}`).then(getNextBirds);
+    d3.json(`${getSightingsURL(totalCount)}`).then(getNextBirds);
   }
   else {
     console.log(`Finished getting sightings; total ${totalCount}`);
   }
 }
 
-function getAllBirds() {
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function getSightingsURL(offset) {
+  dates = getFormattedQueryDates();
+  return `${baseURL}/sightings/${offset}/${dates.get('min')}/${dates.get('max')}`
+}
+
+async function getAllBirds() {
+  await sleep(1000);
   markers = L.markerClusterGroup();
-  totalCount = 0; // Is there markers.length?
-  d3.json(`${baseURL}/sightings/${totalCount}`).then(getNextBirds);
+  totalCount = 0;
+  d3.json(`${getSightingsURL(totalCount)}`).then(getNextBirds);
+  console.log(getFormattedQueryDates());
 
   // Add our marker cluster layer to the map.
   myMap.addLayer(markers);
 }
 
-getAllNames();
+// https://stackoverflow.com/questions/563406/how-to-add-days-to-date
+function addDays(date, days) {
+  var result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+function getFormattedQueryDates() {
+  result = new Map();
+  let min = addDays(max_date, -7);
+  result.set('min', `${min.getUTCFullYear()}-${min.getUTCMonth()}-${min.getUTCDate()}`);
+  result.set('max', `${max_date.getUTCFullYear()}-${max_date.getUTCMonth()}-${max_date.getUTCDate()}`);
+  console.log(`min: ${min}, max: ${max_date}`);
+  return result;
+}
+
+getStaticInfo();
 getAllBirds();
+
