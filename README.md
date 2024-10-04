@@ -12,7 +12,7 @@ In addition to a standard "dev" environment from class, you'll need to install p
 # Development Notes
 
 PROBLEMS
-* ...
+* Searching with blank dates doesn't work, and the dates don't auto-populate initially
 
 BIG IDEAS
 * Allow filtering by species
@@ -23,9 +23,12 @@ BIG IDEAS
 
 TODO
 * Make it pretty
+* Date picker needs min/max and probably smarter initial value
+* Simplify name selection with dropsdowns for genus or full scientific name
 * Enable/disable controls during loading
 * Consolidate redundant code
 * Move "normalization" script to a simple .py or maybe the math-ena module, and don't call it "normalization".
 * Probably make all table and column names lowercase
 * Ideally eBird citation data should come from the database, since it could vary depending on dataset.
 * Consider forcing names to all lowercase in the database, and correcting it for presentation in the page
+* Show what filters were used for currently displayed result set

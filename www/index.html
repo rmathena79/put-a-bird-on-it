@@ -52,9 +52,10 @@
         <P>Sighting data comes from the eBird Basic Dataset. Version: EBD_relAug-2024. Cornell Lab of Ornithology, Ithaca, New York. Aug 2024.</P>
         <P>The database is loaded with <span id="max-overall-count">[]</span> bird sightings from <span id="min-overall-date">[]</span> to <span id="max-overall-date">[]</span></P>
         <P>Currently showing <span id="current-count">[]</span> of <span id="max-current-count">[]</span> sightings from <span id="min-current-date">[]</span> to <span id="max-current-date">[]</span></P>
-        <BR>Start Date: <input type="text" id="min-date-picker" readonly="True"/>
-        <BR>End Date: <input type="text" id="max-date-picker" readonly="True"/>
-        <BR><button id="apply-filters" onclick="applyFilters()">Apply Filters</button>        
+        <BR/>Start Date: <input type="text" id="min-date-picker" name="min-date-picker" readonly="True"/>
+        <BR/>End Date: <input type="text" id="max-date-picker" name="max-date-picker" readonly="True"/>
+        <BR/>Starts With: <input type="text" id="name-prefix" name="name-prefix"/> (scientific name)
+        <BR/><button id="apply-filters" onclick="applyFilters()">Apply Filters</button>        
       </div>
       <div style="float: right; width: 80%; height: 100%">
         <div id="map"></div>

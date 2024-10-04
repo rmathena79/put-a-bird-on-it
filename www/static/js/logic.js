@@ -26,6 +26,7 @@ let maxPicker = null;
 // Filter dates are saved as Date objects
 let filterStartDate = null;
 let filterEndDate = null;
+let filterNamePrefix = "";
 
 async function getStaticInfo() {
   console.log("Getting common names");
@@ -53,9 +54,6 @@ async function getStaticInfo() {
     min_date = new Date(response.min);
     max_date = new Date(response.max);
 
-    d3.select("#min-overall-date").text(simpleDateFormat(min_date));
-    d3.select("#max-overall-date").text(simpleDateFormat(max_date));
-
     console.log(`Got dates, min:${simpleDateFormat(min_date)}, max:${simpleDateFormat(max_date)}`);
 
     console.log('Setting up date pickers')
@@ -64,6 +62,11 @@ async function getStaticInfo() {
 
     filterEndDate = max_date;
     filterStartDate = addDays(max_date, -2);
+
+    // Set the input elements' initial value to match our default search dates.
+    //!!! This doesn't actually work.
+    d3.select("#min-overall-date").property('value', filterStartDate);
+    d3.select("#max-overall-date").property('value', filterEndDate);
   });
 
   console.log("Getting max count");
@@ -108,7 +111,13 @@ function getNextBirds(response) {
 
 function getSightingsURL(offset) {
   dates = getFormattedQueryDates();
-  return `${baseURL}/sightings/${offset}/${dates.get('min')}/${dates.get('max')}`
+  result = `${baseURL}/sightings/${offset}/${dates.get('min')}/${dates.get('max')}`
+
+  if (filterNamePrefix != "") {
+    result += `/${filterNamePrefix}`;
+  }
+
+  return result;
 }
 
 async function getAllBirds() {
@@ -121,7 +130,14 @@ async function getAllBirds() {
   d3.select("#min-current-date").text(dates.get('min'));
   d3.select("#max-current-date").text(dates.get('max'));
 
-  d3.json(`${baseURL}/count/${dates.get('min')}/${dates.get('max')}`).then(function (response) {
+  // Get the count of results for our imminent search. The URL must always include dates,
+  // but may or may not include a name:
+  countURL = `${baseURL}/count/${dates.get('min')}/${dates.get('max')}`;
+  if (filterNamePrefix != "") {
+    countURL += `/${filterNamePrefix}`;
+  }
+
+  d3.json(countURL).then(function (response) {
     d3.select("#max-current-count").text(response);
   });
 
@@ -151,6 +167,7 @@ function applyFilters() {
   console.log(`Apply filter ${filterDates.start} - ${filterDates.end}`)
   filterEndDate = filterDates.end;
   filterStartDate = filterDates.start;
+  filterNamePrefix = d3.select("#name-prefix").property("value");
   getAllBirds();
 }
 
