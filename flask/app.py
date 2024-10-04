@@ -41,7 +41,7 @@ def welcome():
         f"<li><B>/api/v1.0/common_names</B>: Get ALL common names and IDs</li>"
         f"<li><B>/api/v1.0/scientific_names</B>: Get ALL scientific names and IDs</li>"
         f"<li><B>/api/v1.0/dates</B>: Get min and max dates with available sightings</li>"
-        f"<li><B>/api/v1.0/count/&ltmin-date&gt/&ltmax-date&gt</B>: Get number of sightings available in specified date range</li>"
+        f"<li><B>/api/v1.0/count/&ltmin-date&gt/&ltmax-date&gt</B>: Get number of sightings available in specified date range (YYYY-MM-DD)</li>"
         f"<li><B>/api/v1.0/sightings/&ltoffset&gt/&ltmin-date&gt/&ltmax-date&gt</B>: Get sighting data {MAX_SIGHTINGS} events at a time, offset as specified and within date range (YYYY-MM-DD)</li>"
     )
 

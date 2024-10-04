@@ -14,11 +14,9 @@ let myMap = L.map("map", {
   zoom: 7,
 });
 
-// Adding the tile layer
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution:
-    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-}).addTo(myMap);
+// These get cleared when starting to download sightings, and updated asynchronously
+let sightingMarkers = L.markerClusterGroup();
+let totalCount = 0;
 
 // Date picker controls, linked together to enforce a date range.
 // These are set up after database min/max dates are available
@@ -29,9 +27,9 @@ let maxPicker = null;
 let filterStartDate = null;
 let filterEndDate = null;
 
-function getStaticInfo() {
+async function getStaticInfo() {
   console.log("Getting common names");
-  d3.json(`${baseURL}/common_names`).then(function (response) {
+  await d3.json(`${baseURL}/common_names`).then(function (response) {
     for (let i = 0; i < response.length; i++) {
       let id = response[i].id;
       let cname = response[i].common_name;
@@ -41,7 +39,7 @@ function getStaticInfo() {
   });  
 
   console.log("Getting scientific names");
-  d3.json(`${baseURL}/scientific_names`).then(function (response) {
+  await d3.json(`${baseURL}/scientific_names`).then(function (response) {
     for (let i = 0; i < response.length; i++) {
       let id = response[i].id;
       let sname = response[i].scientific_name;
@@ -51,7 +49,7 @@ function getStaticInfo() {
   });
 
   console.log("Getting key dates");
-  d3.json(`${baseURL}/dates`).then(function (response) {
+  await d3.json(`${baseURL}/dates`).then(function (response) {
     min_date = new Date(response.min);
     max_date = new Date(response.max);
 
@@ -69,7 +67,7 @@ function getStaticInfo() {
   });
 
   console.log("Getting max count");
-  d3.json(`${baseURL}/count/1900-01-01/2345-12-31`).then(function (response) {
+  await d3.json(`${baseURL}/count/${simpleDateFormat(min_date)}/${simpleDateFormat(max_date)}`).then(function (response) {
     max_overall_count = response;
 
     d3.select("#max-overall-count").text(max_overall_count);
@@ -77,10 +75,6 @@ function getStaticInfo() {
     console.log(`Got max overall count: ${max_overall_count}`);
   });
 }
-
-// These get reset when starting to download sightings, and updated asynchronously
-let markers = null;
-let totalCount = 0;
 
 function getNextBirds(response) {
   // You'll get a response with length==0 when you run out of results
@@ -101,7 +95,7 @@ function getNextBirds(response) {
 
       // Add a new marker to the cluster group, and bind a popup.
       let descriptor = `${cname} (${sname})<BR>Sighted on ${simpleDateFormat(date)}`;
-      markers.addLayer(L.marker([lat, lon]).bindPopup(descriptor));
+      sightingMarkers.addLayer(L.marker([lat, lon]).bindPopup(descriptor));
     }
 
     // Get the next batch
@@ -112,18 +106,14 @@ function getNextBirds(response) {
   }
 }
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 function getSightingsURL(offset) {
   dates = getFormattedQueryDates();
   return `${baseURL}/sightings/${offset}/${dates.get('min')}/${dates.get('max')}`
 }
 
 async function getAllBirds() {
-  await sleep(3000);
-  markers = L.markerClusterGroup();
+  console.log('Getting all bird sightings');
+  sightingMarkers.clearLayers();
   totalCount = 0;
 
   dates = getFormattedQueryDates();
@@ -136,9 +126,6 @@ async function getAllBirds() {
   });
 
   d3.json(`${getSightingsURL(totalCount)}`).then(getNextBirds);  
-
-  // Add our marker cluster layer to the map.
-  myMap.addLayer(markers);
 }
 
 // https://stackoverflow.com/questions/563406/how-to-add-days-to-date
@@ -164,9 +151,26 @@ function applyFilters() {
   console.log(`Apply filter ${filterDates.start} - ${filterDates.end}`)
   filterEndDate = filterDates.end;
   filterStartDate = filterDates.start;
-  //!!! Need to clear old markers
   getAllBirds();
 }
 
-getStaticInfo();
-getAllBirds();
+async function initialize() {
+  console.log('Initializing');
+
+  // Adding the tile layer
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  }).addTo(myMap);
+
+  // Add our marker cluster layer to the map.
+  myMap.addLayer(sightingMarkers);
+
+  // Fetching initial data from the API is asnchronous, but the sighting data depends on some other data
+  // so there is an order dependency:
+  await getStaticInfo();
+  await getAllBirds();
+  console.log('Initialization complete');
+}
+
+initialize();
