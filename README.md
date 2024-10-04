@@ -12,10 +12,11 @@ In addition to a standard "dev" environment from class, you'll need to install p
 # Development Notes
 
 PROBLEMS
+* Trend search in API isn't returning the counts, just the dates. I have a query that gets the counts but am not sure how to jsonify it.
 * Searching with blank dates doesn't work, and the dates don't auto-populate initially
+* Min/max dates aren't showing for the database contents. Think I just removed that code mistakenly.
 
 BIG IDEAS
-* Allow filtering by species
 * Show graph of sightings over time
 * Link popups to species characteristics (requires another data set)
 * Show pictures in popups (requires another data set or maybe there's something in the eBird data)

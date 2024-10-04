@@ -41,8 +41,10 @@ def welcome():
         f"<li><B>/api/v1.0/common_names</B>: Get ALL common names and IDs</li>"
         f"<li><B>/api/v1.0/scientific_names</B>: Get ALL scientific names and IDs</li>"
         f"<li><B>/api/v1.0/dates</B>: Get min and max dates with available sightings</li>"
-        f"<li><B>/api/v1.0/count/&ltmin-date&gt/&ltmax-date&gt</B>: Get number of sightings available in date range</li>"
-        f"<li><B>/api/v1.0/count/&ltmin-date&gt/&ltmax-date&gt/&ltscientific-name&gt</B>: Get number of sightings available in date range, matching name</li>"
+        f"<li><B>/api/v1.0/count/&ltmin-date&gt/&ltmax-date&gt</B>: Get total number of sightings available in date range</li>"
+        f"<li><B>/api/v1.0/count/&ltmin-date&gt/&ltmax-date&gt/&ltscientific-name&gt</B>: Get total number of sightings available in date range, matching name</li>"
+        f"<li><B>/api/v1.0/trend/&ltmin-date&gt/&ltmax-date&gt</B>: Get day-by-day number of sightings in date range</li>"
+        f"<li><B>/api/v1.0/trend/&ltmin-date&gt/&ltmax-date&gt/&ltscientific-name&gt</B>: Get day-by-day number of sightings in date range, matching name</li>"
         f"<li><B>/api/v1.0/sightings/&ltoffset&gt/&ltmin-date&gt/&ltmax-date&gt</B>: Get sightings data, offset as specified, within date range</li>"
         f"<li><B>/api/v1.0/sightings/&ltoffset&gt/&ltmin-date&gt/&ltmax-date&gt/&ltscientific-name&gt</B>: Get sightings data, offset as specified, within date range, matching name</li>"
         f"</ul>"
@@ -114,6 +116,19 @@ def get_sighting_count_date_name(min_date, max_date, namePrefix):
                                 .count()
 
     response = jsonify(results)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
+@app.route("/api/v1.0/trend/<min_date>/<max_date>")
+def get_sighting_trend_date(min_date, max_date):
+    with Session(engine) as session:
+        results = session.query(sightings_tbl.observation_date, func.count(sightings_tbl.observation_date)) \
+                                .filter(sightings_tbl.observation_date.between(min_date, max_date)) \
+                                .group_by(sightings_tbl.observation_date) \
+                                .all()
+
+    results_dicts = [r._asdict() for r in results]
+    response = jsonify(results_dicts)
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 

@@ -141,6 +141,9 @@ async function getAllBirds() {
     d3.select("#max-current-count").text(response);
   });
 
+  // The sighting trend graph can populate asynchronously to getting the individual sighting data:
+  drawSightingGraph();
+
   d3.json(`${getSightingsURL(totalCount)}`).then(getNextBirds);  
 }
 
@@ -171,6 +174,30 @@ function applyFilters() {
   getAllBirds();
 }
 
+function drawSightingGraph() {
+    // Build a Bubble Chart
+    let bubbleTrace = {
+      x: [1,2,3],
+      y: [4,5,6],
+      mode: 'markers',
+    };
+    
+    let bubbleData = [bubbleTrace];
+    
+    let bubbleLayout = {
+      title: 'Dummy graphy',
+      xaxis: {title: 'Dummy X Axis'},
+      yaxis: {title: 'Dummy Y Axis'},
+      showlegend: false,
+      //height: 600, Hoping to auto-adjust size
+    };
+
+    let config = {responsive: true};
+
+    // Render the Bubble Chart
+    Plotly.newPlot('sighting-trend-graph', bubbleData, bubbleLayout, config);
+  }
+
 async function initialize() {
   console.log('Initializing');
 
@@ -186,7 +213,7 @@ async function initialize() {
   // Fetching initial data from the API is asnchronous, but the sighting data depends on some other data
   // so there is an order dependency:
   await getStaticInfo();
-  await getAllBirds();
+  await getAllBirds();  
   console.log('Initialization complete');
 }
 
