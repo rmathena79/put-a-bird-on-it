@@ -36,13 +36,21 @@ app = Flask(__name__)
 def welcome():
     """List all available api routes."""
     return (
-        f"Available Routes:<br/>"
+        f"<h2>Available Routes</h2>"
         f"<ul>"
         f"<li><B>/api/v1.0/common_names</B>: Get ALL common names and IDs</li>"
         f"<li><B>/api/v1.0/scientific_names</B>: Get ALL scientific names and IDs</li>"
         f"<li><B>/api/v1.0/dates</B>: Get min and max dates with available sightings</li>"
-        f"<li><B>/api/v1.0/count/&ltmin-date&gt/&ltmax-date&gt</B>: Get number of sightings available in specified date range (YYYY-MM-DD)</li>"
-        f"<li><B>/api/v1.0/sightings/&ltoffset&gt/&ltmin-date&gt/&ltmax-date&gt</B>: Get sighting data {MAX_SIGHTINGS} events at a time, offset as specified and within date range (YYYY-MM-DD)</li>"
+        f"<li><B>/api/v1.0/count/&ltmin-date&gt/&ltmax-date&gt</B>: Get number of sightings available in date range</li>"
+        f"<li><B>/api/v1.0/count/&ltmin-date&gt/&ltmax-date&gt/&ltscientific-name&gt</B>: Get number of sightings available in date range, matching name</li>"
+        f"<li><B>/api/v1.0/sightings/&ltoffset&gt/&ltmin-date&gt/&ltmax-date&gt</B>: Get sightings data, offset as specified, within date range</li>"
+        f"<li><B>/api/v1.0/sightings/&ltoffset&gt/&ltmin-date&gt/&ltmax-date&gt/&ltscientific-name&gt</B>: Get sightings data, offset as specified, within date range, matching name</li>"
+        f"</ul>"
+        f"<h2>Usage Notes</h2>"
+        f"<ul>"
+        f"<li>Dates should be specified in YYYY-MM-DD format.</li>"
+        f"<li>Names are matched by finding names that start with the specified string. So to search for all species within a genus, specify only the genus name. To search for a single species, specify the full scientific name (genus and species). Note this is case sensitive; the genus name is capitalized and the species name is not.</li>"
+        f"<li>Sightings are sent {MAX_SIGHTINGS} events at a time. Use the offset the download the entire result.</li>"
     )
 
 @app.route("/api/v1.0/common_names")
@@ -77,7 +85,7 @@ def get_dates():
     return response
 
 @app.route("/api/v1.0/count/<min_date>/<max_date>")
-def get_sighting_count(min_date, max_date):
+def get_sighting_count_date(min_date, max_date):
     with Session(engine) as session:
         results = session.query(sightings_tbl.common_name, sightings_tbl.scientific_name, 
                                 sightings_tbl.latitude, sightings_tbl.longitude,
@@ -89,13 +97,54 @@ def get_sighting_count(min_date, max_date):
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
+@app.route("/api/v1.0/count/<min_date>/<max_date>/<namePrefix>")
+def get_sighting_count_date_name(min_date, max_date, namePrefix):
+    with Session(engine) as session:
+        # First we need the IDs of matching scientific names
+        idResults = session.query(snames_tbl.id) \
+                                  .filter(snames_tbl.scientific_name.startswith(namePrefix)) \
+                                  .all()
+        ids = [result[0] for result in idResults]
+
+        results = session.query(sightings_tbl.common_name, sightings_tbl.scientific_name, 
+                                sightings_tbl.latitude, sightings_tbl.longitude,
+                                sightings_tbl.observation_date) \
+                                .filter(sightings_tbl.observation_date.between(min_date, max_date)) \
+                                .filter(sightings_tbl.scientific_name.in_(ids)) \
+                                .count()
+
+    response = jsonify(results)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
 @app.route("/api/v1.0/sightings/<offset>/<min_date>/<max_date>")
-def get_sightings(offset, min_date, max_date):
+def get_sightings_date(offset, min_date, max_date):
     with Session(engine) as session:
         results = session.query(sightings_tbl.common_name, sightings_tbl.scientific_name, 
                                 sightings_tbl.latitude, sightings_tbl.longitude,
                                 sightings_tbl.observation_date) \
                                 .filter(sightings_tbl.observation_date.between(min_date, max_date)) \
+                                .offset(offset).limit(MAX_SIGHTINGS).all()
+
+    results_dicts = [r._asdict() for r in results]
+    response = jsonify(results_dicts)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
+@app.route("/api/v1.0/sightings/<offset>/<min_date>/<max_date>/<namePrefix>")
+def get_sightings_date_name(offset, min_date, max_date, namePrefix):
+    with Session(engine) as session:
+        # First we need the IDs of matching scientific names
+        idResults = session.query(snames_tbl.id) \
+                                  .filter(snames_tbl.scientific_name.startswith(namePrefix)) \
+                                  .all()
+        ids = [result[0] for result in idResults]
+
+        results = session.query(sightings_tbl.common_name, sightings_tbl.scientific_name, 
+                                sightings_tbl.latitude, sightings_tbl.longitude,
+                                sightings_tbl.observation_date) \
+                                .filter(sightings_tbl.observation_date.between(min_date, max_date)) \
+                                .filter(sightings_tbl.scientific_name.in_(ids)) \
                                 .offset(offset).limit(MAX_SIGHTINGS).all()
 
     results_dicts = [r._asdict() for r in results]
