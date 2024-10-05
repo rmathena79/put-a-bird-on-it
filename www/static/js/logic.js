@@ -175,28 +175,37 @@ function applyFilters() {
 }
 
 function drawSightingGraph() {
-    // Build a Bubble Chart
-    let bubbleTrace = {
-      x: [1,2,3],
-      y: [4,5,6],
-      mode: 'markers',
-    };
-    
-    let bubbleData = [bubbleTrace];
-    
-    let bubbleLayout = {
-      title: 'Dummy graphy',
-      xaxis: {title: 'Dummy X Axis'},
-      yaxis: {title: 'Dummy Y Axis'},
-      showlegend: false,
-      //height: 600, Hoping to auto-adjust size
-    };
-
-    let config = {responsive: true};
-
-    // Render the Bubble Chart
-    Plotly.newPlot('sighting-trend-graph', bubbleData, bubbleLayout, config);
+  console.log('Populating sighting trend graph');
+  dates = getFormattedQueryDates();
+  queryUrl = `${baseURL}/trend/${dates.get('min')}/${dates.get('max')}`;
+  if (filterNamePrefix != "") {
+    queryUrl += `/${filterNamePrefix}`;
   }
+
+  d3.json(queryUrl).then(function (response) {
+      // Build a line chart
+      let lineTrace = {
+        x: response.dates,
+        y: response.counts,
+        type: 'line',
+      };
+      
+      let lineData = [lineTrace];
+      
+      let lineLayout = {
+        title: 'Total Sightings Reported',
+        xaxis: {title: 'Date'},
+        yaxis: {title: 'Sighting Events'},
+        showlegend: false,
+      };
+
+      let config = {responsive: true};
+
+      // Render the Bubble Chart
+      Plotly.newPlot('sighting-trend-graph', lineData, lineLayout, config);
+});
+}
+
 
 async function initialize() {
   console.log('Initializing');

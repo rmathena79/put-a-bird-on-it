@@ -43,8 +43,8 @@ def welcome():
         f"<li><B>/api/v1.0/dates</B>: Get min and max dates with available sightings</li>"
         f"<li><B>/api/v1.0/count/&ltmin-date&gt/&ltmax-date&gt</B>: Get total number of sightings available in date range</li>"
         f"<li><B>/api/v1.0/count/&ltmin-date&gt/&ltmax-date&gt/&ltscientific-name&gt</B>: Get total number of sightings available in date range, matching name</li>"
-        f"<li><B>/api/v1.0/trend/&ltmin-date&gt/&ltmax-date&gt</B>: Get day-by-day number of sightings in date range</li>"
-        f"<li><B>/api/v1.0/trend/&ltmin-date&gt/&ltmax-date&gt/&ltscientific-name&gt</B>: Get day-by-day number of sightings in date range, matching name</li>"
+        f"<li><B>/api/v1.0/trend/&ltmin-date&gt/&ltmax-date&gt</B>: Get day-by-day number of sightings in date range. Sorted</li>"
+        f"<li><B>/api/v1.0/trend/&ltmin-date&gt/&ltmax-date&gt/&ltscientific-name&gt</B>: Get day-by-day number of sightings in date range, matching name. Sorted.</li>"
         f"<li><B>/api/v1.0/sightings/&ltoffset&gt/&ltmin-date&gt/&ltmax-date&gt</B>: Get sightings data, offset as specified, within date range</li>"
         f"<li><B>/api/v1.0/sightings/&ltoffset&gt/&ltmin-date&gt/&ltmax-date&gt/&ltscientific-name&gt</B>: Get sightings data, offset as specified, within date range, matching name</li>"
         f"</ul>"
@@ -122,13 +122,46 @@ def get_sighting_count_date_name(min_date, max_date, namePrefix):
 @app.route("/api/v1.0/trend/<min_date>/<max_date>")
 def get_sighting_trend_date(min_date, max_date):
     with Session(engine) as session:
-        results = session.query(sightings_tbl.observation_date, func.count(sightings_tbl.observation_date)) \
+        results = session.query(sightings_tbl.observation_date, func.count(sightings_tbl.observation_date).label('sightings')) \
                                 .filter(sightings_tbl.observation_date.between(min_date, max_date)) \
+                                .order_by(sightings_tbl.observation_date) \
                                 .group_by(sightings_tbl.observation_date) \
                                 .all()
 
-    results_dicts = [r._asdict() for r in results]
-    response = jsonify(results_dicts)
+    # Results aren't initially in a very convenient form, so turn it into
+    # a list of dates and a list of counts
+    flattened = np.ravel(results, order='F')
+    dates = list(flattened[:len(flattened)//2])
+    counts = list(flattened[-len(flattened)//2:])
+    results_dict = {'dates': dates, 'counts': counts}
+    response = jsonify(results_dict)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
+@app.route("/api/v1.0/trend/<min_date>/<max_date>/<namePrefix>")
+def get_sighting_trend_date_name(min_date, max_date, namePrefix):
+    with Session(engine) as session:
+        # First we need the IDs of matching scientific names
+        idResults = session.query(snames_tbl.id) \
+                                  .filter(snames_tbl.scientific_name.startswith(namePrefix)) \
+                                  .all()
+        ids = [result[0] for result in idResults]
+
+
+        results = session.query(sightings_tbl.observation_date, func.count(sightings_tbl.observation_date).label('sightings')) \
+                                .filter(sightings_tbl.observation_date.between(min_date, max_date)) \
+                                .filter(sightings_tbl.scientific_name.in_(ids)) \
+                                .order_by(sightings_tbl.observation_date) \
+                                .group_by(sightings_tbl.observation_date) \
+                                .all()
+
+    # Results aren't initially in a very convenient form, so turn it into
+    # a list of dates and a list of counts
+    flattened = np.ravel(results, order='F')
+    dates = list(flattened[:len(flattened)//2])
+    counts = list(flattened[-len(flattened)//2:])
+    results_dict = {'dates': dates, 'counts': counts}
+    response = jsonify(results_dict)
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
