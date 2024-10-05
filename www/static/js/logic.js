@@ -95,9 +95,10 @@ function getNextBirds(response) {
       let cname = cnames.get(cname_id);
       let sname = snames.get(sname_id);
       let date = new Date(r.observation_date);
+      let infoLink = `https://animaldiversity.org/accounts/${sname.replace(' ', '_')}/`
 
       // Add a new marker to the cluster group, and bind a popup.
-      let descriptor = `${cname} (${sname})<BR>Sighted on ${simpleDateFormat(date)}`;
+      let descriptor = `${cname}<BR/><a href="${infoLink}">${sname}</a><BR/>Sighted on ${simpleDateFormat(date)}`;
       sightingMarkers.addLayer(L.marker([lat, lon]).bindPopup(descriptor));
     }
 
