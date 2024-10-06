@@ -14,11 +14,10 @@ In addition to a standard "dev" environment from class, you'll need to install p
 # Development Notes
 
 PROBLEMS TO SOLVE BEFORE SUBMISSION
-* Searching with blank dates doesn't work, and the dates don't auto-populate initially
+* ...
 
 LESSER PROBLEMS
-* Needs an overall beautification effort
-* Date picker needs min/max and probably smarter initial value
+* ...
 
 BIG IDEAS
 * Link popups to species characteristics from Avonet
@@ -27,11 +26,11 @@ BIG IDEAS
 * (Can't find a good source without scraping) Show pictures in popups
 
 TODO
-* Make Enter work for applying filters
 * Simplify name selection with dropsdowns for genus or full scientific name
 * Add trend lines for genus, probably on a second Y axis
 * Consolidate redundant code
-* Move "normalization" script to a simple .py or maybe the math-ena module, and don't call it "normalization".
+* Make Enter work for applying filters
+* Move "normalization" script to a simple .py file, and don't call it "normalization".
 * Probably make all table and column names lowercase
 * Ideally eBird citation data should come from the database, since it could vary depending on dataset.
 * Consider forcing names to all lowercase in the database, and correcting it for presentation in the page

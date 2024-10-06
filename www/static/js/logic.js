@@ -28,13 +28,11 @@ let maxPicker = null;
 let filterStartDate = null;
 let filterEndDate = null;
 let filterNamePrefix = "";
-filterNamePrefix = "B"; //!!! Handy during dev
 
 // Strings for the view toggle button
 const TOGGLE_BUTTON_GRAPHS = "View Graphs";
 const TOGGLE_BUTTON_MAP = "View Map";
-//!!!const TOGGLE_BUTTON_DEFAULT = TOGGLE_BUTTON_GRAPHS;
-const TOGGLE_BUTTON_DEFAULT = TOGGLE_BUTTON_MAP; //!!! Faster for developing the graph part
+const TOGGLE_BUTTON_DEFAULT = TOGGLE_BUTTON_GRAPHS;
 
 const DISPLAY_ON = "block";
 const DISPLAY_OFF = "none";
@@ -67,24 +65,32 @@ async function getStaticInfo() {
 
   console.log("Getting key dates");
   await d3.json(`${baseURL}/dates`).then(function (response) {
-    min_date = new Date(response.min);
-    max_date = new Date(response.max);
+    // Going from string to date to string to date is an unsavory way to handle time zone issues
+    min_date = new Date(simpleDateFormat(new Date(response.min)));
+    max_date = new Date(simpleDateFormat(new Date(response.max)));
 
     console.log(`Got dates, min:${simpleDateFormat(min_date)}, max:${simpleDateFormat(max_date)}`);
+    console.log(`Got dates, min:${min_date}, max:${max_date}`);
     d3.select("#min-overall-date").text(simpleDateFormat(min_date));
     d3.select("#max-overall-date").text(simpleDateFormat(max_date));
 
-    console.log('Setting up date pickers')
-    minPicker = datepicker('#min-date-picker', { id: 1, startDate: min_date });
-    maxPicker = datepicker('#max-date-picker', { id: 1, startDate: max_date });
-
+    // Initially, show a week's worth of data
     filterEndDate = max_date;
-    filterStartDate = addDays(max_date, -7); // Initially, show a week's worth of data
+    filterStartDate = addDays(max_date, -7);
 
-    // Set the input elements' initial value to match our default search dates.
-    //!!! This doesn't actually work.
-    d3.select("#min-overall-date").property('value', filterStartDate);
-    d3.select("#max-overall-date").property('value', filterEndDate);
+    console.log('Setting up date pickers')
+    minPicker = datepicker('#min-date-picker', { id: 1, minDate: min_date, maxDate: max_date, dateSelected: filterStartDate,
+      onSelect: (instance, date) => {
+        // Don't clear the selected date
+        if (date === undefined) {instance.setDate(filterStartDate); instance.hide();}
+      }
+     });
+    maxPicker = datepicker('#max-date-picker', { id: 1, minDate: min_date, maxDate: max_date, dateSelected: filterEndDate,
+      onSelect: (instance, date) => {
+        // Don't clear the selected date
+        if (date === undefined) {instance.setDate(filterEndDate); instance.hide();}
+      }
+     });
   });
 
   console.log("Getting max count");
