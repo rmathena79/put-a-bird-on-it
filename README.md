@@ -14,7 +14,6 @@ In addition to a standard "dev" environment from class, you'll need to install p
 # Development Notes
 
 PROBLEMS TO SOLVE BEFORE SUBMISSION
-* Trend graphs are not clear and need context
 * Searching with blank dates doesn't work, and the dates don't auto-populate initially
 
 LESSER PROBLEMS
@@ -28,10 +27,9 @@ BIG IDEAS
 * (Can't find a good source without scraping) Show pictures in popups
 
 TODO
-* Add a STOP button when loading
 * Make Enter work for applying filters
-* Show what filters were used for currently displayed result set
 * Simplify name selection with dropsdowns for genus or full scientific name
+* Add trend lines for genus, probably on a second Y axis
 * Consolidate redundant code
 * Move "normalization" script to a simple .py or maybe the math-ena module, and don't call it "normalization".
 * Probably make all table and column names lowercase

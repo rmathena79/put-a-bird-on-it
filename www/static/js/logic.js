@@ -28,11 +28,13 @@ let maxPicker = null;
 let filterStartDate = null;
 let filterEndDate = null;
 let filterNamePrefix = "";
+filterNamePrefix = "B"; //!!! Handy during dev
 
 // Strings for the view toggle button
 const TOGGLE_BUTTON_GRAPHS = "View Graphs";
 const TOGGLE_BUTTON_MAP = "View Map";
-const TOGGLE_BUTTON_DEFAULT = TOGGLE_BUTTON_GRAPHS;
+//!!!const TOGGLE_BUTTON_DEFAULT = TOGGLE_BUTTON_GRAPHS;
+const TOGGLE_BUTTON_DEFAULT = TOGGLE_BUTTON_MAP; //!!! Faster for developing the graph part
 
 const DISPLAY_ON = "block";
 const DISPLAY_OFF = "none";
@@ -77,7 +79,7 @@ async function getStaticInfo() {
     maxPicker = datepicker('#max-date-picker', { id: 1, startDate: max_date });
 
     filterEndDate = max_date;
-    filterStartDate = addDays(max_date, -2);
+    filterStartDate = addDays(max_date, -7); // Initially, show a week's worth of data
 
     // Set the input elements' initial value to match our default search dates.
     //!!! This doesn't actually work.
@@ -198,10 +200,12 @@ async function getAllBirds() {
   sightingMarkers.clearLayers();
   totalCount = 0;
 
+  // Update displays to describe the current search
   dates = getFormattedQueryDates();
   d3.select("#current-count").text(totalCount);
   d3.select("#min-current-date").text(dates.get('min'));
   d3.select("#max-current-date").text(dates.get('max'));
+  d3.select("#current-name-filter").text(filterNamePrefix);
 
   // Get the count of results for our imminent search. The URL must always include dates,
   // but may or may not include a name:
@@ -267,9 +271,11 @@ async function drawSightingGraph() {
   }
 
   d3.json(queryUrl).then(await async function (filteredResponse) {
+      let dates = filteredResponse.dates.map(dateString => new Date(dateString));
+      
       // Build a line chart based on the raw counts
       let countTrace = {
-        x: filteredResponse.dates,
+        x: dates,
         y: filteredResponse.counts,
         type: 'line',
       };
@@ -277,9 +283,12 @@ async function drawSightingGraph() {
       let countData = [countTrace];
       
       let countLayout = {
-        title: 'Sightings Reported (Count)',
+        title: 'Number of Sightings Reported',
         xaxis: {title: 'Date'},
-        yaxis: {title: 'Sighting Events'},
+        yaxis: {
+          title: 'Sightings',
+          rangemode: 'tozero',
+        },
         showlegend: false,
       };
 
@@ -303,7 +312,7 @@ async function drawSightingGraph() {
       }
 
       let percentTrace = {
-        x: filteredResponse.dates,
+        x: dates,
         y: percentages,
         type: 'line',
       };
@@ -311,9 +320,15 @@ async function drawSightingGraph() {
       let percentData = [percentTrace];
       
       let percentLayout = {
-        title: 'Sightings Reported (Percent)',
-        xaxis: {title: 'Date'},
-        yaxis: {title: 'Sighting Events'},
+        title: 'Percent of Total Sightings',
+        xaxis: {
+          title: 'Date',
+        },
+        yaxis: {
+          title: 'Sighting (%)',
+          tickformat: ',.2%',
+          rangemode: 'tozero',
+        },
         showlegend: false,
       };
 

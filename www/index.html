@@ -36,7 +36,6 @@
           <P>eBird Board!</P>
           <P>Sighting data comes from the eBird Basic Dataset. Version: EBD_relAug-2024. Cornell Lab of Ornithology, Ithaca, New York. Aug 2024.</P>
           <P>The database is loaded with <span id="max-overall-count">[]</span> bird sightings from <span id="min-overall-date">[]</span> to <span id="max-overall-date">[]</span></P>
-          <P>Currently showing <span id="current-count">[]</span> of <span id="max-current-count">[]</span> sightings from <span id="min-current-date">[]</span> to <span id="max-current-date">[]</span></P>
           <div id="filter-controls" style="opacity: 100%;">
             <table>
             <tr><td><label for="min-date-picker">Start Date</label></td><td><input type="text" id="min-date-picker" name="min-date-picker" readonly="True"/></td></tr>
@@ -48,13 +47,35 @@
             <button id="toggle-view" onclick="toggleView()" style="width: 40%;">This space intentionally left blank</button>
           </div>
         </div>
+        <hr/>
+        <div style="padding: 5px">
+          <P>Currently displayed results are based on this search:</P>
+          <table>
+            <tr><td>Start Date:</td><td><span id="min-current-date">[]</span></td></tr>
+            <tr><td>End Date:</td><td><span id="max-current-date">[]</span></td></tr>
+            <tr><td>Name Filter:</td><td><span id="current-name-filter">[]</span></td></tr>
+          </table>
+          <P>Loaded <span id="current-count">[]</span> of <span id="max-current-count">[]</span> sightings</P>
+        </div>          
       </div>
       <div style="float: right; width: 80%; height: 100%">
         <div id="map" style="display: block;"></div>
         <div id="graphs" style="display: none;">
-          <BR/>Total Sightings:
-          <div id="sighting-trend-graph-count"></div>
-          <div id="sighting-trend-graph-percent"></div>
+          <h3 style="text-align: center">Sightings Matching Search</h3>
+          <table>
+            <tr>
+              <td style="width: 50%;"/>
+              <td><div id="sighting-trend-graph-count" style="height: 40vh;"></div></td>
+              <td style="width:50%"/></tr>
+            <tr>
+              <td style="width: 50%;"/>
+              <td>
+                <div id="sighting-trend-graph-percent" style="height: 40vh;"></div>
+                <P style="text-align: center;">(This may be a better indicator of birds' prevalence, since bird watcher activity varies day-to-day)</P>
+              </td>
+              <td style="width:50%"/>
+            </tr>
+          </table>                    
         </div>
         <div id="load-screen" style="display: none; height: 100%; align-content: center; text-align: center;">
           <h1 id="progress-full-pct">Loading...</h1>
