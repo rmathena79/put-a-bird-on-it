@@ -17,6 +17,7 @@ let myMap = L.map("map", {
 // These get cleared when starting to download sightings, and updated asynchronously
 let sightingMarkers = L.markerClusterGroup();
 let totalCount = 0;
+let filteredCount = 0;
 
 // Date picker controls, linked together to enforce a date range.
 // These are set up after database min/max dates are available
@@ -32,6 +33,13 @@ let filterNamePrefix = "";
 const TOGGLE_BUTTON_GRAPHS = "View Graphs";
 const TOGGLE_BUTTON_MAP = "View Map";
 const TOGGLE_BUTTON_DEFAULT = TOGGLE_BUTTON_GRAPHS;
+
+const DISPLAY_ON = "block";
+const DISPLAY_OFF = "none";
+
+// Used to indicate when the page is downloading data
+let loadingSightings = true;
+let loadingTrends = true;
 
 async function getStaticInfo() {
   console.log("Getting common names");
@@ -86,12 +94,64 @@ async function getStaticInfo() {
   });
 }
 
+function checkControlStates() {
+  // There's three main displays: map, graphs, and load screen.
+  // The map and graph are toggleable by the user, and the load screen comes and goes programatically
+  let shouldShowLoadScreen = loadingSightings || loadingTrends;
+
+  if (shouldShowLoadScreen) {
+    d3.select("#load-screen").style("display", DISPLAY_ON);
+    d3.select("#map").style("display", DISPLAY_OFF);
+    d3.select("#graphs").style("display", DISPLAY_OFF);
+
+    // Disable and grey out the main controls
+    d3.select("#filter-controls").style("opacity", "66%");
+    d3.select("#min-date-picker").property("disabled", "true");
+    d3.select("#max-date-picker").property("disabled", "true");
+    d3.select("#name-prefix").property("disabled", "true");
+    d3.select("#apply-filters").property("disabled", "true");
+    d3.select("#toggle-view").property("disabled", "true");
+  }
+  else
+  {
+    d3.select("#load-screen").style("display", DISPLAY_OFF);
+
+    // With the load screen not needed, graph/map view is tied to the toggle button
+    let shouldShowGraphs = d3.select("#toggle-view").text() == TOGGLE_BUTTON_MAP;
+    if (shouldShowGraphs) {
+      d3.select("#map").style("display", DISPLAY_OFF);
+      d3.select("#graphs").style("display", DISPLAY_ON);
+    }
+    else {
+      d3.select("#map").style("display", DISPLAY_ON);
+      d3.select("#graphs").style("display", DISPLAY_OFF);
+    }
+
+    // Enable the main controls
+    d3.select("#filter-controls").style("opacity", "100%");
+    d3.select("#min-date-picker").attr("disabled", null);
+    d3.select("#min-date-picker").attr("disabled", null);
+    d3.select("#max-date-picker").attr("disabled", null);
+    d3.select("#name-prefix").attr("disabled", null);
+    d3.select("#apply-filters").attr("disabled", null);
+    d3.select("#toggle-view").attr("disabled", null);
+  }
+}
+
+function setLoadProgress(percent) {
+  console.log(`${percent*100}%`);
+  d3.select("#progress-full").style("width", `${percent*100}%`)
+  d3.select("#progress-full-pct").text(`Loading: ${Math.floor(percent*100)}%`)
+  d3.select("#progress-empty").style("width", `${(1 - percent)*100}%`)
+}
+
 function getNextBirds(response) {
   // You'll get a response with length==0 when you run out of results
   if (response.length > 0) {
     totalCount += response.length;
     console.log(`Got ${response.length} sightings; new total ${totalCount}`);
     d3.select("#current-count").text(totalCount);
+    setLoadProgress(totalCount / filteredCount);
 
     for (let i = 0; i < response.length; i++) {
       let r = response[i];
@@ -113,6 +173,9 @@ function getNextBirds(response) {
     d3.json(`${getSightingsURL(totalCount)}`).then(getNextBirds);
   }
   else {
+    loadingSightings = false;
+    checkControlStates();
+
     console.log(`Finished getting sightings; total ${totalCount}`);
   }
 }
@@ -145,14 +208,20 @@ async function getAllBirds() {
     countURL += `/${filterNamePrefix}`;
   }
 
-  d3.json(countURL).then(function (response) {
+  loadingSightings = true;
+  setLoadProgress(0);
+  checkControlStates();
+
+  await d3.json(countURL).then(function (response) {
     d3.select("#max-current-count").text(response);
+    filteredCount = response;
   });
 
   // The sighting trend graph can populate asynchronously to getting the individual sighting data:
-  drawSightingGraph();
+  let graphPromise = drawSightingGraph();
 
-  d3.json(`${getSightingsURL(totalCount)}`).then(getNextBirds);  
+  d3.json(`${getSightingsURL(totalCount)}`).then(getNextBirds);
+  await graphPromise;  
 }
 
 // https://stackoverflow.com/questions/563406/how-to-add-days-to-date
@@ -184,6 +253,10 @@ function applyFilters() {
 
 async function drawSightingGraph() {
   console.log('Populating sighting trend graphs');
+
+  loadingTrends = true;
+  checkControlStates();
+
   dates = getFormattedQueryDates();
   let baseQueryUrl = `${baseURL}/trend/${dates.get('min')}/${dates.get('max')}`;
   let queryUrl = baseQueryUrl;
@@ -191,7 +264,7 @@ async function drawSightingGraph() {
     queryUrl += `/${filterNamePrefix}`;
   }
 
-  d3.json(queryUrl).then(async function (filteredResponse) {
+  d3.json(queryUrl).then(await async function (filteredResponse) {
       // Build a line chart based on the raw counts
       let countTrace = {
         x: filteredResponse.dates,
@@ -243,25 +316,24 @@ async function drawSightingGraph() {
       };
 
       Plotly.newPlot('sighting-trend-graph-percent', percentData, percentLayout, {responsive: true});
+
+      loadingTrends = false;
+      checkControlStates();
 });
 }
 
 function toggleView() {
   let buttonElement = d3.select("#toggle-view");
-  let on = "block";
-  let off = "none";
   if (buttonElement.text() == TOGGLE_BUTTON_GRAPHS) {
     // Change to Graph view
-    d3.select("#map").style("display", off);
-    d3.select("#graphs").style("display", on);
     buttonElement.text(TOGGLE_BUTTON_MAP);
   }
   else {
     // Change to  Map view
-    d3.select("#map").style("display", on);
-    d3.select("#graphs").style("display", off);
     buttonElement.text(TOGGLE_BUTTON_GRAPHS);
   }
+
+  checkControlStates();
 }
 
 async function initialize() {
