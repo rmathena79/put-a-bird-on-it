@@ -28,6 +28,11 @@ let filterStartDate = null;
 let filterEndDate = null;
 let filterNamePrefix = "";
 
+// Strings for the view toggle button
+const TOGGLE_BUTTON_GRAPHS = "View Graphs";
+const TOGGLE_BUTTON_MAP = "View Map";
+const TOGGLE_BUTTON_DEFAULT = TOGGLE_BUTTON_GRAPHS;
+
 async function getStaticInfo() {
   console.log("Getting common names");
   await d3.json(`${baseURL}/common_names`).then(function (response) {
@@ -55,6 +60,8 @@ async function getStaticInfo() {
     max_date = new Date(response.max);
 
     console.log(`Got dates, min:${simpleDateFormat(min_date)}, max:${simpleDateFormat(max_date)}`);
+    d3.select("#min-overall-date").text(simpleDateFormat(min_date));
+    d3.select("#max-overall-date").text(simpleDateFormat(max_date));
 
     console.log('Setting up date pickers')
     minPicker = datepicker('#min-date-picker', { id: 1, startDate: min_date });
@@ -175,38 +182,87 @@ function applyFilters() {
   getAllBirds();
 }
 
-function drawSightingGraph() {
-  console.log('Populating sighting trend graph');
+async function drawSightingGraph() {
+  console.log('Populating sighting trend graphs');
   dates = getFormattedQueryDates();
-  queryUrl = `${baseURL}/trend/${dates.get('min')}/${dates.get('max')}`;
+  let baseQueryUrl = `${baseURL}/trend/${dates.get('min')}/${dates.get('max')}`;
+  let queryUrl = baseQueryUrl;
   if (filterNamePrefix != "") {
     queryUrl += `/${filterNamePrefix}`;
   }
 
-  d3.json(queryUrl).then(function (response) {
-      // Build a line chart
-      let lineTrace = {
-        x: response.dates,
-        y: response.counts,
+  d3.json(queryUrl).then(async function (filteredResponse) {
+      // Build a line chart based on the raw counts
+      let countTrace = {
+        x: filteredResponse.dates,
+        y: filteredResponse.counts,
         type: 'line',
       };
       
-      let lineData = [lineTrace];
+      let countData = [countTrace];
       
-      let lineLayout = {
-        title: 'Total Sightings Reported',
+      let countLayout = {
+        title: 'Sightings Reported (Count)',
         xaxis: {title: 'Date'},
         yaxis: {title: 'Sighting Events'},
         showlegend: false,
       };
 
-      let config = {responsive: true};
+      // Render the raw count chart
+      Plotly.newPlot('sighting-trend-graph-count', countData, countLayout, {responsive: true});
 
-      // Render the Bubble Chart
-      Plotly.newPlot('sighting-trend-graph', lineData, lineLayout, config);
+      // Build a similar chart based on percent of total -- which requires a new query if the first was filtered by name
+      let totalCounts = filteredResponse.counts;
+      if (filterNamePrefix != "") {
+        // Do the query WITHOUT the name filter to get all sightings per day
+        await d3.json(baseQueryUrl).then(function (unfilteredResponse) {
+          totalCounts = unfilteredResponse.counts;
+        });
+      }
+
+      // Calculate the percentages
+      let percentages = [];
+      for (i=0; i<filteredResponse.counts.length; i++)
+      {
+        percentages.push(filteredResponse.counts[i] / totalCounts[i]);
+      }
+
+      let percentTrace = {
+        x: filteredResponse.dates,
+        y: percentages,
+        type: 'line',
+      };
+      
+      let percentData = [percentTrace];
+      
+      let percentLayout = {
+        title: 'Sightings Reported (Percent)',
+        xaxis: {title: 'Date'},
+        yaxis: {title: 'Sighting Events'},
+        showlegend: false,
+      };
+
+      Plotly.newPlot('sighting-trend-graph-percent', percentData, percentLayout, {responsive: true});
 });
 }
 
+function toggleView() {
+  let buttonElement = d3.select("#toggle-view");
+  let on = "block";
+  let off = "none";
+  if (buttonElement.text() == TOGGLE_BUTTON_GRAPHS) {
+    // Change to Graph view
+    d3.select("#map").style("display", off);
+    d3.select("#graphs").style("display", on);
+    buttonElement.text(TOGGLE_BUTTON_MAP);
+  }
+  else {
+    // Change to  Map view
+    d3.select("#map").style("display", on);
+    d3.select("#graphs").style("display", off);
+    buttonElement.text(TOGGLE_BUTTON_GRAPHS);
+  }
+}
 
 async function initialize() {
   console.log('Initializing');
@@ -219,6 +275,9 @@ async function initialize() {
 
   // Add our marker cluster layer to the map.
   myMap.addLayer(sightingMarkers);
+
+  // Set up the toggle button
+  d3.select("#toggle-view").text(TOGGLE_BUTTON_DEFAULT)
 
   // Fetching initial data from the API is asnchronous, but the sighting data depends on some other data
   // so there is an order dependency:

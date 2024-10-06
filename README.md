@@ -2,8 +2,10 @@
 Plotting bird sightings from eBird
 
 # Citations
-Bird sighting data comes from eBird's Basic Dataset. The code should work with any snapshot of their data, but I have been using this version:
-eBird Basic Dataset. Version: EBD_relApr-2022. Cornell Lab of Ornithology, Ithaca, New York. 9/26/2024.
+Bird sighting data comes from eBird's (https://ebird.org/home) Basic Dataset. The code should work with any snapshot of their data, but I have been using subsets of this version:
+* eBird Basic Dataset. Version: EBD_relApr-2022. Cornell Lab of Ornithology, Ithaca, New York. 9/26/2024.
+
+The map links to pages from Animal Diversity Web (https://animaldiversity.org/) for detail about each species.
 
 # Instructions
 
@@ -20,7 +22,9 @@ LESSER PROBLEMS
 * ...
 
 BIG IDEAS
-* Link popups to species characteristics (requires another data set)
+* Percentage-base sighting trend, toggle between raw count and percent
+* Link popups to species characteristics from Avonet
+  * Use Avonet's name list as definitive, for scientific names
 * Provide a way to show graphs of characteristics of selected species vs. the rest of its genus and all birds
 * (Can't find a good source without scraping) Show pictures in popups
 

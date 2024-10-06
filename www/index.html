@@ -40,11 +40,15 @@
         <BR/>End Date: <input type="text" id="max-date-picker" name="max-date-picker" readonly="True"/>
         <BR/>Starts With: <input type="text" id="name-prefix" name="name-prefix"/> (scientific name)
         <BR/><button id="apply-filters" onclick="applyFilters()">Apply Filters</button>        
-        <BR/>Total Sightings:
-        <div id="sighting-trend-graph"></div>
+        <BR/><button id="toggle-view" onclick="toggleView()">!!!</button>        
       </div>
       <div style="float: right; width: 80%; height: 100%">
-        <div id="map"></div>
+        <div id="map" style="display: block;"></div>
+        <div id="graphs" style="display: none;">
+          <BR/>Total Sightings:
+          <div id="sighting-trend-graph-count"></div>
+          <div id="sighting-trend-graph-percent"></div>  
+        </div>
       </div>
   </body>
 
