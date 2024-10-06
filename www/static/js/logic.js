@@ -40,6 +40,7 @@ const DISPLAY_OFF = "none";
 // Used to indicate when the page is downloading data
 let loadingSightings = true;
 let loadingTrends = true;
+let aborting = false;
 
 async function getStaticInfo() {
   console.log("Getting common names");
@@ -147,7 +148,7 @@ function setLoadProgress(percent) {
 
 function getNextBirds(response) {
   // You'll get a response with length==0 when you run out of results
-  if (response.length > 0) {
+  if (response.length > 0 && !aborting) {
     totalCount += response.length;
     console.log(`Got ${response.length} sightings; new total ${totalCount}`);
     d3.select("#current-count").text(totalCount);
@@ -174,6 +175,7 @@ function getNextBirds(response) {
   }
   else {
     loadingSightings = false;
+    aborting = false;
     checkControlStates();
 
     console.log(`Finished getting sightings; total ${totalCount}`);
@@ -334,6 +336,10 @@ function toggleView() {
   }
 
   checkControlStates();
+}
+
+function abortLoad() {
+  aborting = true;
 }
 
 async function initialize() {

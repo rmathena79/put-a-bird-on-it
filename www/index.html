@@ -38,11 +38,14 @@
           <P>The database is loaded with <span id="max-overall-count">[]</span> bird sightings from <span id="min-overall-date">[]</span> to <span id="max-overall-date">[]</span></P>
           <P>Currently showing <span id="current-count">[]</span> of <span id="max-current-count">[]</span> sightings from <span id="min-current-date">[]</span> to <span id="max-current-date">[]</span></P>
           <div id="filter-controls" style="opacity: 100%;">
-            <BR/>Start Date: <input type="text" id="min-date-picker" name="min-date-picker" readonly="True"/>
-            <BR/>End Date: <input type="text" id="max-date-picker" name="max-date-picker" readonly="True"/>
-            <BR/>Starts With: <input type="text" id="name-prefix" name="name-prefix"/> (scientific name)
-            <BR/><button id="apply-filters" onclick="applyFilters()">Apply Filters</button>        
-            <BR/><button id="toggle-view" onclick="toggleView()">This space intentionally left blank</button>          
+            <table>
+            <tr><td><label for="min-date-picker">Start Date</label></td><td><input type="text" id="min-date-picker" name="min-date-picker" readonly="True"/></td></tr>
+            <tr><td><label for="max-date-picker">End Date</label></td><td><input type="text" id="max-date-picker" name="max-date-picker" readonly="True"/></td></tr>
+            <tr><td><label for="name-prefix">Starts With</label></td><td><input type="text" id="name-prefix" name="name-prefix"/></td></tr></tr>
+            </table>
+            <br/>
+            <button id="apply-filters" onclick="applyFilters()" style="width: 40%;">Apply Filters</button>
+            <button id="toggle-view" onclick="toggleView()" style="width: 40%;">This space intentionally left blank</button>
           </div>
         </div>
       </div>
@@ -53,11 +56,12 @@
           <div id="sighting-trend-graph-count"></div>
           <div id="sighting-trend-graph-percent"></div>
         </div>
-        <div id="load-screen" style="display: none; height: 100%;  align-content: center; text-align: center;">
+        <div id="load-screen" style="display: none; height: 100%; align-content: center; text-align: center;">
           <h1 id="progress-full-pct">Loading...</h1>
           <div id="progress-full" style="float: left; width: 0%; height: 10%; background-color: green;"></div>
           <div id="progress-empty" style="float: right; width: 100%; height: 10%; background-color: red;"></div>          
           <img src="loading.gif" style="object-fit: cover; width: 10%"/>
+          <br/><button id="abort-load" onclick="abortLoad()"><h1>ABORT</h1></button>
         </div>
       </div>
   </body>
