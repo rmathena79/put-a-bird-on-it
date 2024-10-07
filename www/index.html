@@ -40,7 +40,8 @@
             <table>
             <tr><td><label for="min-date-picker">Start Date</label></td><td><input type="text" id="min-date-picker" name="min-date-picker" readonly="True"/></td></tr>
             <tr><td><label for="max-date-picker">End Date</label></td><td><input type="text" id="max-date-picker" name="max-date-picker" readonly="True"/></td></tr>
-            <tr><td><label for="name-prefix">Starts With</label></td><td><input type="text" id="name-prefix" name="name-prefix"/></td></tr></tr>
+            <tr><td><label for="genus-picker">Genus</label></td><td><select id="genus-picker" name="genus-picker" onchange="changeGenus(this)" style="width: 100%;"/></td></tr>
+            <tr><td><label for="species-picker">Species</label></td><td><select id="species-picker" name="species-picker" style="width: 100%;"/></td></tr>
             </table>
             <br/>
             <button id="apply-filters" onclick="applyFilters()" style="width: 40%;">Apply Filters</button>
@@ -53,7 +54,8 @@
           <table>
             <tr><td>Start Date:</td><td><span id="min-current-date">[]</span></td></tr>
             <tr><td>End Date:</td><td><span id="max-current-date">[]</span></td></tr>
-            <tr><td>Name Filter:</td><td><span id="current-name-filter">[]</span></td></tr>
+            <tr><td>Genus:</td><td><span id="current-genus-filter">[]</span></td></tr>
+            <tr><td>Species:</td><td><span id="current-species-filter">[]</span></td></tr>
           </table>
           <P>Loaded <span id="current-count">[]</span> of <span id="max-current-count">[]</span> sightings</P>
         </div>          

@@ -33,4 +33,3 @@ TODO
 * Move "normalization" script to a simple .py file, and don't call it "normalization".
 * Probably make all table and column names lowercase
 * Ideally eBird citation data should come from the database, since it could vary depending on dataset.
-* Consider forcing names to all lowercase in the database, and correcting it for presentation in the page

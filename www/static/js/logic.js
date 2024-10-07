@@ -2,8 +2,9 @@
 let baseURL = "http://127.0.0.1:5000/api/v1.0";
 
 // More-or-less unchanging values we get as the page first loads:
-let cnames = new Map();
-let snames = new Map();
+let cnamesByID = new Map();
+let snamedByID = new Map();
+let genusSpeciesMap = new Map();
 let min_date = null;
 let max_date = null;
 let max_overall_count = 0;
@@ -27,7 +28,8 @@ let maxPicker = null;
 // Filter dates are saved as Date objects
 let filterStartDate = null;
 let filterEndDate = null;
-let filterNamePrefix = "";
+let filterGenus = "";
+let filterSpecies = "";
 
 // Strings for the view toggle button
 const TOGGLE_BUTTON_GRAPHS = "View Graphs";
@@ -48,9 +50,9 @@ async function getStaticInfo() {
     for (let i = 0; i < response.length; i++) {
       let id = response[i].id;
       let cname = response[i].common_name;
-      cnames.set(id, cname);
+      cnamesByID.set(id, cname);
     }
-    console.log(`Got ${cnames.size} common names`);
+    console.log(`Got ${cnamesByID.size} common names`);
   });  
 
   console.log("Getting scientific names");
@@ -58,9 +60,36 @@ async function getStaticInfo() {
     for (let i = 0; i < response.length; i++) {
       let id = response[i].id;
       let sname = response[i].scientific_name;
-      snames.set(id, sname);
+      snamedByID.set(id, sname);
+
+      // Build up the map of genus names to full scientific names
+      genus = sname.split(' ')[0];
+      if (genusSpeciesMap.has(genus)) {
+        // Add this species under the genus
+        genusSpeciesMap.get(genus).push(sname);
+
+        // Keep it sorted (re-doing this isn't very efficient but it should be OK for our purposes)
+        genusSpeciesMap.get(genus).sort();
+      }
+      else {
+        // Create a new list of names under this genus
+        genusSpeciesMap.set(genus, [sname]);
+      }
     }
-    console.log(`Got ${snames.size} scientific names`);
+    
+    console.log(`Got ${snamedByID.size} scientific names`);
+
+    // Populate options for the genus selector, sorted alphabetically
+    // (Note the species selection is more dynamic, depending on the genus selected)
+    console.log('Setting up genus filter control');
+    console.log(genusSpeciesMap);
+
+    let selector = d3.select("#genus-picker");
+    let genuses = Array.from(genusSpeciesMap.keys()).sort();
+    selector.append('option').text("").property('value', "");
+    genuses.forEach(genus =>  {
+      selector.append('option').text(genus).property('value', genus);
+    })
   });
 
   console.log("Getting key dates");
@@ -117,7 +146,8 @@ function checkControlStates() {
     d3.select("#filter-controls").style("opacity", "66%");
     d3.select("#min-date-picker").property("disabled", "true");
     d3.select("#max-date-picker").property("disabled", "true");
-    d3.select("#name-prefix").property("disabled", "true");
+    d3.select("#genus-picker").property("disabled", "true");
+    d3.select("#species-picker").property("disabled", "true");
     d3.select("#apply-filters").property("disabled", "true");
     d3.select("#toggle-view").property("disabled", "true");
   }
@@ -141,7 +171,8 @@ function checkControlStates() {
     d3.select("#min-date-picker").attr("disabled", null);
     d3.select("#min-date-picker").attr("disabled", null);
     d3.select("#max-date-picker").attr("disabled", null);
-    d3.select("#name-prefix").attr("disabled", null);
+    d3.select("#genus-picker").attr("disabled", null);
+    d3.select("#species-picker").attr("disabled", null);
     d3.select("#apply-filters").attr("disabled", null);
     d3.select("#toggle-view").attr("disabled", null);
   }
@@ -168,8 +199,8 @@ function getNextBirds(response) {
       let sname_id = r.scientific_name;
       let lat = r.latitude;
       let lon = r.longitude;
-      let cname = cnames.get(cname_id);
-      let sname = snames.get(sname_id);
+      let cname = cnamesByID.get(cname_id);
+      let sname = snamedByID.get(sname_id);
       let date = new Date(r.observation_date);
       let infoLink = `https://animaldiversity.org/accounts/${sname.replace(' ', '_')}/`
 
@@ -190,12 +221,27 @@ function getNextBirds(response) {
   }
 }
 
+function getFullNameFilter() {
+  if (filterSpecies != "") {
+    // The species is a full name itself
+    return filterSpecies;
+  }
+  else if (filterGenus != "") {
+    // The genus works as a name prefix
+    return filterGenus;
+  }
+  else {
+    // No filter
+    return "";
+  }
+}
+
 function getSightingsURL(offset) {
   dates = getFormattedQueryDates();
   result = `${baseURL}/sightings/${offset}/${dates.get('min')}/${dates.get('max')}`
 
-  if (filterNamePrefix != "") {
-    result += `/${filterNamePrefix}`;
+  if (getFullNameFilter() != "") {
+    result += `/${getFullNameFilter()}`;
   }
 
   return result;
@@ -211,13 +257,14 @@ async function getAllBirds() {
   d3.select("#current-count").text(totalCount);
   d3.select("#min-current-date").text(dates.get('min'));
   d3.select("#max-current-date").text(dates.get('max'));
-  d3.select("#current-name-filter").text(filterNamePrefix);
+  d3.select("#current-genus-filter").text(filterGenus);
+  d3.select("#current-species-filter").text(filterSpecies);
 
   // Get the count of results for our imminent search. The URL must always include dates,
   // but may or may not include a name:
   countURL = `${baseURL}/count/${dates.get('min')}/${dates.get('max')}`;
-  if (filterNamePrefix != "") {
-    countURL += `/${filterNamePrefix}`;
+  if (getFullNameFilter() != "") {
+    countURL += `/${getFullNameFilter()}`;
   }
 
   loadingSightings = true;
@@ -256,10 +303,11 @@ function simpleDateFormat(date) {
 
 function applyFilters() {
   filterDates = minPicker.getRange()
-  console.log(`Apply filter ${filterDates.start} - ${filterDates.end}`)
   filterEndDate = filterDates.end;
   filterStartDate = filterDates.start;
-  filterNamePrefix = d3.select("#name-prefix").property("value");
+  filterGenus = d3.select("#genus-picker").property("value");
+  filterSpecies = d3.select("#species-picker").property("value");
+  console.log(`Apply filter ${getFormattedQueryDates().get('min')} - ${getFormattedQueryDates().get('max')}, ${getFullNameFilter()}`);
   getAllBirds();
 }
 
@@ -272,8 +320,8 @@ async function drawSightingGraph() {
   dates = getFormattedQueryDates();
   let baseQueryUrl = `${baseURL}/trend/${dates.get('min')}/${dates.get('max')}`;
   let queryUrl = baseQueryUrl;
-  if (filterNamePrefix != "") {
-    queryUrl += `/${filterNamePrefix}`;
+  if (getFullNameFilter() != "") {
+    queryUrl += `/${getFullNameFilter()}`;
   }
 
   d3.json(queryUrl).then(await async function (filteredResponse) {
@@ -303,7 +351,7 @@ async function drawSightingGraph() {
 
       // Build a similar chart based on percent of total -- which requires a new query if the first was filtered by name
       let totalCounts = filteredResponse.counts;
-      if (filterNamePrefix != "") {
+      if (getFullNameFilter() != "") {
         // Do the query WITHOUT the name filter to get all sightings per day
         await d3.json(baseQueryUrl).then(function (unfilteredResponse) {
           totalCounts = unfilteredResponse.counts;
@@ -361,6 +409,20 @@ function toggleView() {
 
 function abortLoad() {
   aborting = true;
+}
+
+function changeGenus(genusSelector) { 
+  // When a new genus is selected, the species selector needs to be reset
+  let speciesSelector = d3.select("#species-picker");
+  speciesSelector.selectAll("option").remove();
+
+  // Refill the species select with species associated with the new genus
+  names = genusSpeciesMap.get(genusSelector.value);
+  console.log(`Changing to genus ${genusSelector.value} -> ${names}`);
+  speciesSelector.append("option").text("").property('value', "")
+  names.forEach(name => {
+    speciesSelector.append("option").text(name).property('value', name)
+  })
 }
 
 async function initialize() {
