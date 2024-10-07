@@ -3,7 +3,7 @@ let baseURL = "http://127.0.0.1:5000/api/v1.0";
 
 // More-or-less unchanging values we get as the page first loads:
 let cnamesByID = new Map();
-let snamedByID = new Map();
+let snamesByID = new Map();
 let genusSpeciesMap = new Map();
 let min_date = null;
 let max_date = null;
@@ -60,7 +60,7 @@ async function getStaticInfo() {
     for (let i = 0; i < response.length; i++) {
       let id = response[i].id;
       let sname = response[i].scientific_name;
-      snamedByID.set(id, sname);
+      snamesByID.set(id, sname);
 
       // Build up the map of genus names to full scientific names
       genus = sname.split(" ")[0];
@@ -76,7 +76,7 @@ async function getStaticInfo() {
       }
     }
 
-    console.log(`Got ${snamedByID.size} scientific names`);
+    console.log(`Got ${snamesByID.size} scientific names`);
 
     // Populate options for the genus selector, sorted alphabetically
     // (Note the species selection is more dynamic, depending on the genus selected)
@@ -98,11 +98,9 @@ async function getStaticInfo() {
     max_date = new Date(simpleDateFormat(new Date(response.max)));
 
     console.log(
-      `Got dates, min:${simpleDateFormat(min_date)}, max:${simpleDateFormat(
-        max_date
-      )}`
-    );
+      `Got dates, min:${simpleDateFormat(min_date)}, max:${simpleDateFormat(max_date)}`);
     console.log(`Got dates, min:${min_date}, max:${max_date}`);
+
     d3.select("#min-overall-date").text(simpleDateFormat(min_date));
     d3.select("#max-overall-date").text(simpleDateFormat(max_date));
 
@@ -139,18 +137,10 @@ async function getStaticInfo() {
     });
   });
 
-  console.log("Getting max count");
-  await d3
-    .json(
-      `${baseURL}/count/${simpleDateFormat(min_date)}/${simpleDateFormat(
-        max_date
-      )}`
-    )
-    .then(function (response) {
+  console.log("Getting overall max count");
+  await d3.json(`${baseURL}/count/${simpleDateFormat(min_date)}/${simpleDateFormat(max_date)}`).then(function (response) {
       max_overall_count = response;
-
       d3.select("#max-overall-count").text(max_overall_count);
-
       console.log(`Got max overall count: ${max_overall_count}`);
     });
 }
@@ -208,6 +198,10 @@ function setLoadProgress(percent) {
   d3.select("#progress-empty").style("width", `${(1 - percent) * 100}%`);
 }
 
+function getInfoLink(scientificName) {
+  return `https://animaldiversity.org/accounts/${scientificName.replace(" ","_")}/`;
+}
+
 function getNextBirds(response) {
   // You'll get a response with length==0 when you run out of results
   if (response.length > 0 && !aborting) {
@@ -223,17 +217,12 @@ function getNextBirds(response) {
       let lat = r.latitude;
       let lon = r.longitude;
       let cname = cnamesByID.get(cname_id);
-      let sname = snamedByID.get(sname_id);
+      let sname = snamesByID.get(sname_id);
       let date = new Date(r.observation_date);
-      let infoLink = `https://animaldiversity.org/accounts/${sname.replace(
-        " ",
-        "_"
-      )}/`;
+      let infoLink = getInfoLink(sname);
 
       // Add a new marker to the cluster group, and bind a popup.
-      let descriptor = `${cname}<BR/><a href="${infoLink}">${sname}</a><BR/>Sighted on ${simpleDateFormat(
-        date
-      )}`;
+      let descriptor = `${cname}<BR/><a href="${infoLink}">${sname}</a><BR/>Sighted on ${simpleDateFormat(date)}`;
       sightingMarkers.addLayer(L.marker([lat, lon]).bindPopup(descriptor));
     }
 
@@ -263,9 +252,7 @@ function getFullNameFilter() {
 
 function getSightingsURL(offset) {
   dates = getFormattedQueryDates();
-  result = `${baseURL}/sightings/${offset}/${dates.get("min")}/${dates.get(
-    "max"
-  )}`;
+  result = `${baseURL}/sightings/${offset}/${dates.get("min")}/${dates.get("max")}`;
 
   if (getFullNameFilter() != "") {
     result += `/${getFullNameFilter()}`;
@@ -284,8 +271,20 @@ async function getAllBirds() {
   d3.select("#current-count").text(totalCount);
   d3.select("#min-current-date").text(dates.get("min"));
   d3.select("#max-current-date").text(dates.get("max"));
-  d3.select("#current-genus-filter").text(filterGenus);
-  d3.select("#current-species-filter").text(filterSpecies);
+
+  // The genus name, if there is one, links to more info
+  d3.select("#current-genus-filter").html(null);
+  if (filterGenus != "") {
+    let infoLink = getInfoLink(filterGenus);
+    d3.select("#current-genus-filter").html(null).append("A").property("href", infoLink).text(filterGenus);
+  }
+
+  // Same deal for species name
+  d3.select("#current-species-filter").html(null);
+  if (filterSpecies != "") {
+    let infoLink = getInfoLink(filterSpecies);
+    d3.select("#current-species-filter").html(null).append("A").property("href", infoLink).text(filterSpecies);
+  }
 
   // Get the count of results for our imminent search. The URL must always include dates,
   // but may or may not include a name:
@@ -294,18 +293,21 @@ async function getAllBirds() {
     countURL += `/${getFullNameFilter()}`;
   }
 
+  // Indicate that we'll be loading data
   loadingSightings = true;
   setLoadProgress(0);
   checkControlStates();
 
+  // Get the count of sightings first so the display shows reasonable values
   await d3.json(countURL).then(function (response) {
     d3.select("#max-current-count").text(response);
     filteredCount = response;
   });
 
   // The sighting trend graph can populate asynchronously to getting the individual sighting data:
-  let graphPromise = drawSightingGraph();
+  let graphPromise = drawSightingGraphs();
 
+  // Finally, do the actual call to get sighting data. This will be done repeatedly until we get them all.
   d3.json(`${getSightingsURL(totalCount)}`).then(getNextBirds);
   await graphPromise;
 }
@@ -331,46 +333,66 @@ function simpleDateFormat(date) {
 }
 
 function applyFilters() {
+  // Record the filter controls' values so the will be used in the next search
   filterDates = minPicker.getRange();
   filterEndDate = filterDates.end;
   filterStartDate = filterDates.start;
   filterGenus = d3.select("#genus-picker").property("value");
   filterSpecies = d3.select("#species-picker").property("value");
-  console.log(
-    `Apply filter ${getFormattedQueryDates().get(
-      "min"
-    )} - ${getFormattedQueryDates().get("max")}, ${getFullNameFilter()}`
-  );
+
+  console.log(`Apply filter ${getFormattedQueryDates().get("min")} - ${getFormattedQueryDates().get("max")}, ${getFullNameFilter()}`);
+
+  // Do the search
   getAllBirds();
 }
 
-async function drawSightingGraph() {
+async function drawSightingGraphs() {
   console.log("Populating sighting trend graphs");
 
   loadingTrends = true;
   checkControlStates();
 
-  dates = getFormattedQueryDates();
-  let baseQueryUrl = `${baseURL}/trend/${dates.get("min")}/${dates.get("max")}`;
+  qdates = getFormattedQueryDates();
+  let baseQueryUrl = `${baseURL}/trend/${qdates.get("min")}/${qdates.get("max")}`;
   let queryUrl = baseQueryUrl;
   if (getFullNameFilter() != "") {
     queryUrl += `/${getFullNameFilter()}`;
   }
 
-  d3.json(queryUrl).then(
-    await async function (filteredResponse) {
+  let filteredName = filterSpecies == "" ? "genus" : "species";
+
+  d3.json(queryUrl).then(await async function (filteredResponse) {
+      // Get the dates -- we may do several queries but they should all return the same dates
       let dates = filteredResponse.dates.map(
         (dateString) => new Date(dateString)
-      );
+      );      
 
       // Build a line chart based on the raw counts
       let countTrace = {
         x: dates,
         y: filteredResponse.counts,
         type: "line",
+        name: filteredName,
       };
 
       let countData = [countTrace];
+
+      let genusCounts = []; // Also useful for the percentage graph if applicable
+      if (filterSpecies != "") {
+        // The original search was for a full species name, so we can search for just the genus
+        // and get another set of interesting counts
+        await d3.json(`${baseQueryUrl}/${filterGenus}`).then(function (genusResponse) {
+          genusCounts = genusResponse.counts;
+        });
+
+        let genusCountTrace = {
+          x: dates,
+          y: genusCounts,
+          type: "line",
+          name: "genus",
+        };
+        countData.push(genusCountTrace);
+      }
 
       let countLayout = {
         title: "Number of Sightings Reported",
@@ -379,7 +401,7 @@ async function drawSightingGraph() {
           title: "Sightings",
           rangemode: "tozero",
         },
-        showlegend: false,
+        showlegend: countData.length > 1,
       };
 
       // Render the raw count chart
@@ -407,9 +429,7 @@ async function drawSightingGraph() {
         let filteredPercentages = [];
         for (i = 0; i < filteredResponse.counts.length; i++) {
           filteredPercentages.push(filteredResponse.counts[i] / totalCounts[i]);
-        }
-
-        let filteredName = filterSpecies == "" ? "genus" : "species";
+        }        
 
         let filteredPercentTrace = {
           x: dates,
@@ -421,24 +441,23 @@ async function drawSightingGraph() {
         let percentData = [filteredPercentTrace];
 
         if (filterSpecies != "") {
-          // The original search was for a full species name, so we can search for just the genus
-          // and get another set of interesting counts
+          console.log(`A`);
+          // The original search was for a full species name, so we can plot the genus percentages too
           let genusPercentages = [];
+          for (i = 0; i < genusCounts.length; i++) {
+            genusPercentages.push(genusCounts[i] / totalCounts[i]);
+          }
 
-          // Do the query WITHOUT the name filter to get all sightings per day
-          await d3.json(`${baseQueryUrl}/${filterGenus}`).then(function (genusResponse) {
-            for (i = 0; i < genusResponse.counts.length; i++) {
-              genusPercentages.push(genusResponse.counts[i] / totalCounts[i]);
-            }
-          });
-
+          console.log(`B ${JSON.stringify(genusPercentages)}`);
           let genusPercentTrace = {
             x: dates,
             y: genusPercentages,
             type: "line",
             name: "genus",
           };
+          console.log(`C ${JSON.stringify(genusPercentTrace)}`);
           percentData.push(genusPercentTrace);
+          console.log(`D ${JSON.stringify(percentData)}`);
         }
 
         let percentLayout = {
@@ -451,9 +470,11 @@ async function drawSightingGraph() {
             tickformat: ",.2%",
             rangemode: "tozero",
           },
-          showlegend: true,
+          showlegend: percentData.length > 1,
         };
+        console.log(`E ${JSON.stringify(percentLayout)}`);
 
+        // Render the percentage chart
         Plotly.newPlot(
           "sighting-trend-graph-percent",
           percentData,
@@ -471,10 +492,10 @@ async function drawSightingGraph() {
 function toggleView() {
   let buttonElement = d3.select("#toggle-view");
   if (buttonElement.text() == TOGGLE_BUTTON_GRAPHS) {
-    // Change to Graph view
+    // Change to Graph view, set button text to Map:
     buttonElement.text(TOGGLE_BUTTON_MAP);
   } else {
-    // Change to  Map view
+    // Change to Map view, set button text to Graphs:
     buttonElement.text(TOGGLE_BUTTON_GRAPHS);
   }
 
