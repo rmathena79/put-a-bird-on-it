@@ -396,7 +396,9 @@ async function drawSightingGraphs() {
 
       let countLayout = {
         title: "Number of Sightings Reported",
-        xaxis: { title: "Date" },
+        xaxis: { 
+          title: "Date"
+        },
         yaxis: {
           title: "Sightings",
           rangemode: "tozero",
@@ -459,7 +461,7 @@ async function drawSightingGraphs() {
         let percentLayout = {
           title: "Percent of Total Sightings",
           xaxis: {
-            title: "Date",
+            title: "Date"
           },
           yaxis: {
             title: "Sighting (%)",

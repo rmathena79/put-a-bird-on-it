@@ -20,7 +20,7 @@ PROBLEMS TO SOLVE BEFORE SUBMISSION
 * ...
 
 LESSER PROBLEMS
-* ...
+* I suspect there are still some time zone problems lurking in the graph generation code
 
 BIG IDEAS
 * Link popups to species characteristics from Avonet
@@ -29,7 +29,6 @@ BIG IDEAS
 * (Can't find a good source without scraping) Show pictures in popups
 
 TODO
-* Move "normalization" script to a simple .py file, and don't call it "normalization".
 * Clean up graph generation code
 * Make Enter work for applying filters
 * Probably make all table and column names lowercase
