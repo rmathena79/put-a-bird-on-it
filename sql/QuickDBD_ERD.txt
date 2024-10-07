@@ -1,0 +1,21 @@
+# This describes the schema, formatted for a QuickDBD ERD diagram
+# https://www.quickdatabasediagrams.com
+
+common_names
+-
+id PK int
+common_name varchar(128)
+
+scientific_names
+-
+id PK int
+scientific_name varchar(128)
+
+sightings
+-
+id varchar(47)
+common_name FK >- common_names.id
+scientific_name FK >- scientific_names.id
+latitude numeric
+longitude numeric
+observation_date date

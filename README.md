@@ -3,6 +3,7 @@ Project 3 for Data Analytics Boot Camp. Submitted October, 2024.
 
 This project defines a database of bird sightings, an API for accessing that data, and a web site which plots sightings on an interactive map. Search / filter options are provided for dates and bird genus or species. There are also graphs showing when birds have been sighted and how the counts for category of birds (genus or species) relates to all sightings.
 
+
 # Notes to Graders
 Reviewing the requirements for the Data Visualization Track:
 
@@ -22,10 +23,6 @@ Reviewing the requirements for the Data Visualization Track:
 * **www/static/js/logic.js**: My javascript implementation
 * **www/index.html**: The web page
 * **www/loading.gif**: A giant spinning spiral animation
-
-Need to add:
-* Presentation
-* Screenshots illustrating database, since I can't distribute the data
 
 
 # Instructions
@@ -56,12 +53,15 @@ Multiple elements link to pages from Animal Diversity Web (https://animaldiversi
 
 The loading animation was posted to Stack Overflow without any restriction noted: https://stackoverflow.com/questions/35566048/load-animated-gif-in-uiimageview-ios
 
+
 # Development Notes
 
 PROBLEMS TO SOLVE BEFORE SUBMISSION
-* ...
+* Exception when clearing genus selection
+* Page title and intro text
 
 LESSER PROBLEMS
+* It's very beige.
 * I suspect there are still some time zone problems lurking in the graph generation code
 
 BIG IDEAS
