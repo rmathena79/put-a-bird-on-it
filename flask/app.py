@@ -55,6 +55,12 @@ def welcome():
         f"<li>Sightings are sent {MAX_SIGHTINGS} events at a time. Use the offset the download the entire result.</li>"
     )
 
+# We need a header item to allow Cross-Origin Resource Sharing, so just add it to every response
+@app.after_request
+def apply_caching(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
 @app.route("/api/v1.0/common_names")
 def get_cnames():
     with Session(engine) as session:
@@ -62,7 +68,6 @@ def get_cnames():
 
     results_dicts = [r._asdict() for r in results]
     response = jsonify(results_dicts)
-    response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
 @app.route("/api/v1.0/scientific_names")
@@ -72,7 +77,6 @@ def get_snames():
     
     results_dicts = [r._asdict() for r in results]
     response = jsonify(results_dicts)
-    response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
 @app.route("/api/v1.0/dates")
@@ -83,77 +87,47 @@ def get_dates():
 
     results_dict = {'min': min, 'max': max}
     response = jsonify(results_dict)
-    response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
 @app.route("/api/v1.0/count/<min_date>/<max_date>")
 def get_sighting_count_date(min_date, max_date):
-    with Session(engine) as session:
-        results = session.query(sightings_tbl.common_name, sightings_tbl.scientific_name, 
-                                sightings_tbl.latitude, sightings_tbl.longitude,
-                                sightings_tbl.observation_date) \
-                                .filter(sightings_tbl.observation_date.between(min_date, max_date)) \
-                                .count()
-
-    response = jsonify(results)
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
+    return get_sighting_count_date_name(min_date, max_date, "")
 
 @app.route("/api/v1.0/count/<min_date>/<max_date>/<namePrefix>")
 def get_sighting_count_date_name(min_date, max_date, namePrefix):
     with Session(engine) as session:
-        # First we need the IDs of matching scientific names
-        idResults = session.query(snames_tbl.id) \
-                                  .filter(snames_tbl.scientific_name.startswith(namePrefix)) \
-                                  .all()
-        ids = [result[0] for result in idResults]
+        q = session.query(sightings_tbl.common_name, sightings_tbl.scientific_name, 
+                          sightings_tbl.latitude, sightings_tbl.longitude,
+                          sightings_tbl.observation_date) \
+                .filter(sightings_tbl.observation_date.between(min_date, max_date))
 
-        results = session.query(sightings_tbl.common_name, sightings_tbl.scientific_name, 
-                                sightings_tbl.latitude, sightings_tbl.longitude,
-                                sightings_tbl.observation_date) \
-                                .filter(sightings_tbl.observation_date.between(min_date, max_date)) \
-                                .filter(sightings_tbl.scientific_name.in_(ids)) \
-                                .count()
+        if namePrefix != "":
+            # Filter by name
+            ids = get_ids(session, namePrefix)
+            q = q.filter(sightings_tbl.scientific_name.in_(ids)) \
 
+    results = q.count()
     response = jsonify(results)
-    response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
 @app.route("/api/v1.0/trend/<min_date>/<max_date>")
 def get_sighting_trend_date(min_date, max_date):
-    with Session(engine) as session:
-        results = session.query(sightings_tbl.observation_date, func.count(sightings_tbl.observation_date).label('sightings')) \
-                                .filter(sightings_tbl.observation_date.between(min_date, max_date)) \
-                                .order_by(sightings_tbl.observation_date) \
-                                .group_by(sightings_tbl.observation_date) \
-                                .all()
-
-    # Results aren't initially in a very convenient form, so turn it into
-    # a list of dates and a list of counts
-    flattened = np.ravel(results, order='F')
-    dates = list(flattened[:len(flattened)//2])
-    counts = list(flattened[-len(flattened)//2:])
-    results_dict = {'dates': dates, 'counts': counts}
-    response = jsonify(results_dict)
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
+    return get_sighting_trend_date_name(min_date, max_date, "")
 
 @app.route("/api/v1.0/trend/<min_date>/<max_date>/<namePrefix>")
 def get_sighting_trend_date_name(min_date, max_date, namePrefix):
     with Session(engine) as session:
-        # First we need the IDs of matching scientific names
-        idResults = session.query(snames_tbl.id) \
-                                  .filter(snames_tbl.scientific_name.startswith(namePrefix)) \
-                                  .all()
-        ids = [result[0] for result in idResults]
-
-
-        results = session.query(sightings_tbl.observation_date, func.count(sightings_tbl.observation_date).label('sightings')) \
+        q = session.query(sightings_tbl.observation_date, func.count(sightings_tbl.observation_date).label('sightings')) \
                                 .filter(sightings_tbl.observation_date.between(min_date, max_date)) \
-                                .filter(sightings_tbl.scientific_name.in_(ids)) \
                                 .order_by(sightings_tbl.observation_date) \
-                                .group_by(sightings_tbl.observation_date) \
-                                .all()
+                                .group_by(sightings_tbl.observation_date)
+        
+        if namePrefix != "":
+            # Filter by name
+            ids = get_ids(session, namePrefix)
+            q = q.filter(sightings_tbl.scientific_name.in_(ids))
+
+        results = q.all()
 
     # Results aren't initially in a very convenient form, so turn it into
     # a list of dates and a list of counts
@@ -162,43 +136,36 @@ def get_sighting_trend_date_name(min_date, max_date, namePrefix):
     counts = list(flattened[-len(flattened)//2:])
     results_dict = {'dates': dates, 'counts': counts}
     response = jsonify(results_dict)
-    response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
 @app.route("/api/v1.0/sightings/<offset>/<min_date>/<max_date>")
 def get_sightings_date(offset, min_date, max_date):
-    with Session(engine) as session:
-        results = session.query(sightings_tbl.common_name, sightings_tbl.scientific_name, 
-                                sightings_tbl.latitude, sightings_tbl.longitude,
-                                sightings_tbl.observation_date) \
-                                .filter(sightings_tbl.observation_date.between(min_date, max_date)) \
-                                .offset(offset).limit(MAX_SIGHTINGS).all()
-
-    results_dicts = [r._asdict() for r in results]
-    response = jsonify(results_dicts)
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
+    return get_sightings_date_name(offset, min_date, max_date, "")
 
 @app.route("/api/v1.0/sightings/<offset>/<min_date>/<max_date>/<namePrefix>")
 def get_sightings_date_name(offset, min_date, max_date, namePrefix):
     with Session(engine) as session:
-        # First we need the IDs of matching scientific names
-        idResults = session.query(snames_tbl.id) \
-                                  .filter(snames_tbl.scientific_name.startswith(namePrefix)) \
-                                  .all()
-        ids = [result[0] for result in idResults]
+        q = session.query(sightings_tbl.common_name, sightings_tbl.scientific_name, 
+                          sightings_tbl.latitude, sightings_tbl.longitude,
+                          sightings_tbl.observation_date) \
+                .filter(sightings_tbl.observation_date.between(min_date, max_date))                         
+        
+        if namePrefix != "":
+            # Filter by name
+            ids = get_ids(session, namePrefix)
+            q = q.filter(sightings_tbl.scientific_name.in_(ids))
 
-        results = session.query(sightings_tbl.common_name, sightings_tbl.scientific_name, 
-                                sightings_tbl.latitude, sightings_tbl.longitude,
-                                sightings_tbl.observation_date) \
-                                .filter(sightings_tbl.observation_date.between(min_date, max_date)) \
-                                .filter(sightings_tbl.scientific_name.in_(ids)) \
-                                .offset(offset).limit(MAX_SIGHTINGS).all()
-
+    results = q.offset(offset).limit(MAX_SIGHTINGS).all()
     results_dicts = [r._asdict() for r in results]
     response = jsonify(results_dicts)
-    response.headers.add('Access-Control-Allow-Origin', '*')
     return response
+
+def get_ids(session, namePrefix):
+    idResults = session.query(snames_tbl.id) \
+            .filter(snames_tbl.scientific_name.startswith(namePrefix)).all()
+    ids = [result[0] for result in idResults]
+    return ids
+
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -441,23 +441,19 @@ async function drawSightingGraphs() {
         let percentData = [filteredPercentTrace];
 
         if (filterSpecies != "") {
-          console.log(`A`);
           // The original search was for a full species name, so we can plot the genus percentages too
           let genusPercentages = [];
           for (i = 0; i < genusCounts.length; i++) {
             genusPercentages.push(genusCounts[i] / totalCounts[i]);
           }
 
-          console.log(`B ${JSON.stringify(genusPercentages)}`);
           let genusPercentTrace = {
             x: dates,
             y: genusPercentages,
             type: "line",
             name: "genus",
           };
-          console.log(`C ${JSON.stringify(genusPercentTrace)}`);
           percentData.push(genusPercentTrace);
-          console.log(`D ${JSON.stringify(percentData)}`);
         }
 
         let percentLayout = {
@@ -472,7 +468,6 @@ async function drawSightingGraphs() {
           },
           showlegend: percentData.length > 1,
         };
-        console.log(`E ${JSON.stringify(percentLayout)}`);
 
         // Render the percentage chart
         Plotly.newPlot(

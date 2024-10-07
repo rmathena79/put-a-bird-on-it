@@ -5,7 +5,7 @@ Plotting bird sightings from eBird
 Bird sighting data comes from eBird's (https://ebird.org/home) Basic Dataset. The code should work with any snapshot of their data, but I have been using subsets of this version:
 * eBird Basic Dataset. Version: EBD_relApr-2022. Cornell Lab of Ornithology, Ithaca, New York. 9/26/2024.
 
-The map links to pages from Animal Diversity Web (https://animaldiversity.org/) for detail about each species.
+Multiple elements link to pages from Animal Diversity Web (https://animaldiversity.org/) for detail about each taxonomic group.
 
 # Instructions
 
@@ -29,10 +29,8 @@ BIG IDEAS
 * (Can't find a good source without scraping) Show pictures in popups
 
 TODO
-* Add trend lines for genus and species when applicable
-* Don't draw the percentage graph when there's no name filter
-* Consolidate redundant code, espescially graph generation and the whole Flask API
 * Move "normalization" script to a simple .py file, and don't call it "normalization".
+* Clean up graph generation code
 * Make Enter work for applying filters
 * Probably make all table and column names lowercase
 * Ideally eBird citation data should come from the database, since it could vary depending on dataset.
