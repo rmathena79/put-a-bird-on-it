@@ -32,8 +32,8 @@ let filterGenus = "";
 let filterSpecies = "";
 
 // Strings for the view toggle button
-const TOGGLE_BUTTON_GRAPHS = "View Graphs";
-const TOGGLE_BUTTON_MAP = "View Map";
+const TOGGLE_BUTTON_GRAPHS = "Statistics";
+const TOGGLE_BUTTON_MAP = "Map";
 const TOGGLE_BUTTON_DEFAULT = TOGGLE_BUTTON_GRAPHS;
 
 const DISPLAY_ON = "block";
@@ -507,14 +507,16 @@ function changeGenus(genusSelector) {
   // When a new genus is selected, the species selector needs to be reset
   let speciesSelector = d3.select("#species-picker");
   speciesSelector.selectAll("option").remove();
-
-  // Refill the species select with species associated with the new genus
-  names = genusSpeciesMap.get(genusSelector.value);
-  console.log(`Changing to genus ${genusSelector.value} -> ${names}`);
-  speciesSelector.append("option").text("").property("value", "");
-  names.forEach((name) => {
-    speciesSelector.append("option").text(name).property("value", name);
-  });
+  
+  let fullNames = genusSpeciesMap.get(genusSelector.value);
+  if (fullNames != undefined) {
+    // Refill the species select with species associated with the new genus
+    console.log(`Changing to genus ${genusSelector.value} -> ${fullNames}`);
+    speciesSelector.append("option").text("").property("value", "");
+    fullNames.forEach((fullName) => {
+      speciesSelector.append("option").text(fullName).property("value", fullName);
+    });
+  }
 }
 
 async function initialize() {
