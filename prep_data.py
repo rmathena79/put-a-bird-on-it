@@ -90,7 +90,7 @@ df = df.loc[:, FINAL_CARE_COLUMNS]
 if not os.path.exists(OUT_DIR):
     os.makedirs(OUT_DIR)
 
-out_path = os.path.join(OUT_DIR, "normalized.csv")
+out_path = os.path.join(OUT_DIR, "sightings.csv")
 print(f"Saving main data: {out_path}")
 ndf.to_csv(out_path, index=False)
 for c in ENUMERATE_COLUMNS:
