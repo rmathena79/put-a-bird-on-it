@@ -9,7 +9,10 @@ The map links to pages from Animal Diversity Web (https://animaldiversity.org/) 
 
 # Instructions
 
-In addition to a standard "dev" environment from class, you'll need to install psycopg2 for sqlalchemty to connect to postgresql.
+In addition to a standard "dev" environment from class, you'll need to install psycopg2 for sqlalchemy to connect to postgresql.
+
+# Contents
+* ...
 
 # Development Notes
 
@@ -26,10 +29,10 @@ BIG IDEAS
 * (Can't find a good source without scraping) Show pictures in popups
 
 TODO
-* Simplify name selection with dropsdowns for genus or full scientific name
-* Add trend lines for genus, probably on a second Y axis
-* Consolidate redundant code
-* Make Enter work for applying filters
+* Add trend lines for genus and species when applicable
+* Don't draw the percentage graph when there's no name filter
+* Consolidate redundant code, espescially graph generation and the whole Flask API
 * Move "normalization" script to a simple .py file, and don't call it "normalization".
+* Make Enter work for applying filters
 * Probably make all table and column names lowercase
 * Ideally eBird citation data should come from the database, since it could vary depending on dataset.

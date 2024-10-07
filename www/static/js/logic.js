@@ -53,7 +53,7 @@ async function getStaticInfo() {
       cnamesByID.set(id, cname);
     }
     console.log(`Got ${cnamesByID.size} common names`);
-  });  
+  });
 
   console.log("Getting scientific names");
   await d3.json(`${baseURL}/scientific_names`).then(function (response) {
@@ -63,33 +63,32 @@ async function getStaticInfo() {
       snamedByID.set(id, sname);
 
       // Build up the map of genus names to full scientific names
-      genus = sname.split(' ')[0];
+      genus = sname.split(" ")[0];
       if (genusSpeciesMap.has(genus)) {
         // Add this species under the genus
         genusSpeciesMap.get(genus).push(sname);
 
         // Keep it sorted (re-doing this isn't very efficient but it should be OK for our purposes)
         genusSpeciesMap.get(genus).sort();
-      }
-      else {
+      } else {
         // Create a new list of names under this genus
         genusSpeciesMap.set(genus, [sname]);
       }
     }
-    
+
     console.log(`Got ${snamedByID.size} scientific names`);
 
     // Populate options for the genus selector, sorted alphabetically
     // (Note the species selection is more dynamic, depending on the genus selected)
-    console.log('Setting up genus filter control');
+    console.log("Setting up genus filter control");
     console.log(genusSpeciesMap);
 
     let selector = d3.select("#genus-picker");
     let genuses = Array.from(genusSpeciesMap.keys()).sort();
-    selector.append('option').text("").property('value', "");
-    genuses.forEach(genus =>  {
-      selector.append('option').text(genus).property('value', genus);
-    })
+    selector.append("option").text("").property("value", "");
+    genuses.forEach((genus) => {
+      selector.append("option").text(genus).property("value", genus);
+    });
   });
 
   console.log("Getting key dates");
@@ -98,7 +97,11 @@ async function getStaticInfo() {
     min_date = new Date(simpleDateFormat(new Date(response.min)));
     max_date = new Date(simpleDateFormat(new Date(response.max)));
 
-    console.log(`Got dates, min:${simpleDateFormat(min_date)}, max:${simpleDateFormat(max_date)}`);
+    console.log(
+      `Got dates, min:${simpleDateFormat(min_date)}, max:${simpleDateFormat(
+        max_date
+      )}`
+    );
     console.log(`Got dates, min:${min_date}, max:${max_date}`);
     d3.select("#min-overall-date").text(simpleDateFormat(min_date));
     d3.select("#max-overall-date").text(simpleDateFormat(max_date));
@@ -107,29 +110,49 @@ async function getStaticInfo() {
     filterEndDate = max_date;
     filterStartDate = addDays(max_date, -7);
 
-    console.log('Setting up date pickers')
-    minPicker = datepicker('#min-date-picker', { id: 1, minDate: min_date, maxDate: max_date, dateSelected: filterStartDate,
+    console.log("Setting up date pickers");
+    minPicker = datepicker("#min-date-picker", {
+      id: 1,
+      minDate: min_date,
+      maxDate: max_date,
+      dateSelected: filterStartDate,
       onSelect: (instance, date) => {
         // Don't clear the selected date
-        if (date === undefined) {instance.setDate(filterStartDate); instance.hide();}
-      }
-     });
-    maxPicker = datepicker('#max-date-picker', { id: 1, minDate: min_date, maxDate: max_date, dateSelected: filterEndDate,
+        if (date === undefined) {
+          instance.setDate(filterStartDate);
+          instance.hide();
+        }
+      },
+    });
+    maxPicker = datepicker("#max-date-picker", {
+      id: 1,
+      minDate: min_date,
+      maxDate: max_date,
+      dateSelected: filterEndDate,
       onSelect: (instance, date) => {
         // Don't clear the selected date
-        if (date === undefined) {instance.setDate(filterEndDate); instance.hide();}
-      }
-     });
+        if (date === undefined) {
+          instance.setDate(filterEndDate);
+          instance.hide();
+        }
+      },
+    });
   });
 
   console.log("Getting max count");
-  await d3.json(`${baseURL}/count/${simpleDateFormat(min_date)}/${simpleDateFormat(max_date)}`).then(function (response) {
-    max_overall_count = response;
+  await d3
+    .json(
+      `${baseURL}/count/${simpleDateFormat(min_date)}/${simpleDateFormat(
+        max_date
+      )}`
+    )
+    .then(function (response) {
+      max_overall_count = response;
 
-    d3.select("#max-overall-count").text(max_overall_count);
+      d3.select("#max-overall-count").text(max_overall_count);
 
-    console.log(`Got max overall count: ${max_overall_count}`);
-  });
+      console.log(`Got max overall count: ${max_overall_count}`);
+    });
 }
 
 function checkControlStates() {
@@ -150,18 +173,16 @@ function checkControlStates() {
     d3.select("#species-picker").property("disabled", "true");
     d3.select("#apply-filters").property("disabled", "true");
     d3.select("#toggle-view").property("disabled", "true");
-  }
-  else
-  {
+  } else {
     d3.select("#load-screen").style("display", DISPLAY_OFF);
 
     // With the load screen not needed, graph/map view is tied to the toggle button
-    let shouldShowGraphs = d3.select("#toggle-view").text() == TOGGLE_BUTTON_MAP;
+    let shouldShowGraphs =
+      d3.select("#toggle-view").text() == TOGGLE_BUTTON_MAP;
     if (shouldShowGraphs) {
       d3.select("#map").style("display", DISPLAY_OFF);
       d3.select("#graphs").style("display", DISPLAY_ON);
-    }
-    else {
+    } else {
       d3.select("#map").style("display", DISPLAY_ON);
       d3.select("#graphs").style("display", DISPLAY_OFF);
     }
@@ -179,10 +200,12 @@ function checkControlStates() {
 }
 
 function setLoadProgress(percent) {
-  console.log(`${percent*100}%`);
-  d3.select("#progress-full").style("width", `${percent*100}%`)
-  d3.select("#progress-full-pct").text(`Loading: ${Math.floor(percent*100)}%`)
-  d3.select("#progress-empty").style("width", `${(1 - percent)*100}%`)
+  console.log(`${percent * 100}%`);
+  d3.select("#progress-full").style("width", `${percent * 100}%`);
+  d3.select("#progress-full-pct").text(
+    `Loading: ${Math.floor(percent * 100)}%`
+  );
+  d3.select("#progress-empty").style("width", `${(1 - percent) * 100}%`);
 }
 
 function getNextBirds(response) {
@@ -202,17 +225,21 @@ function getNextBirds(response) {
       let cname = cnamesByID.get(cname_id);
       let sname = snamedByID.get(sname_id);
       let date = new Date(r.observation_date);
-      let infoLink = `https://animaldiversity.org/accounts/${sname.replace(' ', '_')}/`
+      let infoLink = `https://animaldiversity.org/accounts/${sname.replace(
+        " ",
+        "_"
+      )}/`;
 
       // Add a new marker to the cluster group, and bind a popup.
-      let descriptor = `${cname}<BR/><a href="${infoLink}">${sname}</a><BR/>Sighted on ${simpleDateFormat(date)}`;
+      let descriptor = `${cname}<BR/><a href="${infoLink}">${sname}</a><BR/>Sighted on ${simpleDateFormat(
+        date
+      )}`;
       sightingMarkers.addLayer(L.marker([lat, lon]).bindPopup(descriptor));
     }
 
     // Get the next batch
     d3.json(`${getSightingsURL(totalCount)}`).then(getNextBirds);
-  }
-  else {
+  } else {
     loadingSightings = false;
     aborting = false;
     checkControlStates();
@@ -225,12 +252,10 @@ function getFullNameFilter() {
   if (filterSpecies != "") {
     // The species is a full name itself
     return filterSpecies;
-  }
-  else if (filterGenus != "") {
+  } else if (filterGenus != "") {
     // The genus works as a name prefix
     return filterGenus;
-  }
-  else {
+  } else {
     // No filter
     return "";
   }
@@ -238,7 +263,9 @@ function getFullNameFilter() {
 
 function getSightingsURL(offset) {
   dates = getFormattedQueryDates();
-  result = `${baseURL}/sightings/${offset}/${dates.get('min')}/${dates.get('max')}`
+  result = `${baseURL}/sightings/${offset}/${dates.get("min")}/${dates.get(
+    "max"
+  )}`;
 
   if (getFullNameFilter() != "") {
     result += `/${getFullNameFilter()}`;
@@ -248,21 +275,21 @@ function getSightingsURL(offset) {
 }
 
 async function getAllBirds() {
-  console.log('Getting all bird sightings');
+  console.log("Getting all bird sightings");
   sightingMarkers.clearLayers();
   totalCount = 0;
 
   // Update displays to describe the current search
   dates = getFormattedQueryDates();
   d3.select("#current-count").text(totalCount);
-  d3.select("#min-current-date").text(dates.get('min'));
-  d3.select("#max-current-date").text(dates.get('max'));
+  d3.select("#min-current-date").text(dates.get("min"));
+  d3.select("#max-current-date").text(dates.get("max"));
   d3.select("#current-genus-filter").text(filterGenus);
   d3.select("#current-species-filter").text(filterSpecies);
 
   // Get the count of results for our imminent search. The URL must always include dates,
   // but may or may not include a name:
-  countURL = `${baseURL}/count/${dates.get('min')}/${dates.get('max')}`;
+  countURL = `${baseURL}/count/${dates.get("min")}/${dates.get("max")}`;
   if (getFullNameFilter() != "") {
     countURL += `/${getFullNameFilter()}`;
   }
@@ -280,7 +307,7 @@ async function getAllBirds() {
   let graphPromise = drawSightingGraph();
 
   d3.json(`${getSightingsURL(totalCount)}`).then(getNextBirds);
-  await graphPromise;  
+  await graphPromise;
 }
 
 // https://stackoverflow.com/questions/563406/how-to-add-days-to-date
@@ -292,105 +319,153 @@ function addDays(date, days) {
 
 function getFormattedQueryDates() {
   result = new Map();
-  result.set('min', `${simpleDateFormat(filterStartDate)}`);
-  result.set('max', `${simpleDateFormat(filterEndDate)}`);
+  result.set("min", `${simpleDateFormat(filterStartDate)}`);
+  result.set("max", `${simpleDateFormat(filterEndDate)}`);
   return result;
 }
 
 function simpleDateFormat(date) {
-  return `${date.getUTCFullYear()}-${date.getUTCMonth()+1}-${date.getUTCDate()}`
+  return `${date.getUTCFullYear()}-${
+    date.getUTCMonth() + 1
+  }-${date.getUTCDate()}`;
 }
 
 function applyFilters() {
-  filterDates = minPicker.getRange()
+  filterDates = minPicker.getRange();
   filterEndDate = filterDates.end;
   filterStartDate = filterDates.start;
   filterGenus = d3.select("#genus-picker").property("value");
   filterSpecies = d3.select("#species-picker").property("value");
-  console.log(`Apply filter ${getFormattedQueryDates().get('min')} - ${getFormattedQueryDates().get('max')}, ${getFullNameFilter()}`);
+  console.log(
+    `Apply filter ${getFormattedQueryDates().get(
+      "min"
+    )} - ${getFormattedQueryDates().get("max")}, ${getFullNameFilter()}`
+  );
   getAllBirds();
 }
 
 async function drawSightingGraph() {
-  console.log('Populating sighting trend graphs');
+  console.log("Populating sighting trend graphs");
 
   loadingTrends = true;
   checkControlStates();
 
   dates = getFormattedQueryDates();
-  let baseQueryUrl = `${baseURL}/trend/${dates.get('min')}/${dates.get('max')}`;
+  let baseQueryUrl = `${baseURL}/trend/${dates.get("min")}/${dates.get("max")}`;
   let queryUrl = baseQueryUrl;
   if (getFullNameFilter() != "") {
     queryUrl += `/${getFullNameFilter()}`;
   }
 
-  d3.json(queryUrl).then(await async function (filteredResponse) {
-      let dates = filteredResponse.dates.map(dateString => new Date(dateString));
-      
+  d3.json(queryUrl).then(
+    await async function (filteredResponse) {
+      let dates = filteredResponse.dates.map(
+        (dateString) => new Date(dateString)
+      );
+
       // Build a line chart based on the raw counts
       let countTrace = {
         x: dates,
         y: filteredResponse.counts,
-        type: 'line',
+        type: "line",
       };
-      
+
       let countData = [countTrace];
-      
+
       let countLayout = {
-        title: 'Number of Sightings Reported',
-        xaxis: {title: 'Date'},
+        title: "Number of Sightings Reported",
+        xaxis: { title: "Date" },
         yaxis: {
-          title: 'Sightings',
-          rangemode: 'tozero',
+          title: "Sightings",
+          rangemode: "tozero",
         },
         showlegend: false,
       };
 
       // Render the raw count chart
-      Plotly.newPlot('sighting-trend-graph-count', countData, countLayout, {responsive: true});
+      Plotly.newPlot("sighting-trend-graph-count", countData, countLayout, {
+        responsive: true,
+      });
 
-      // Build a similar chart based on percent of total -- which requires a new query if the first was filtered by name
-      let totalCounts = filteredResponse.counts;
-      if (getFullNameFilter() != "") {
+      // There is a graph showing percent of total sightings, but it is only significant when a name filter is used
+      if (getFullNameFilter() == "") {
+        d3.select("#sighting-trend-graph-percent").style("display",DISPLAY_OFF);
+        d3.select("#sighting-trend-graph-percent-explanation").text("A percentage-based graph is available when genus is selected.");
+      } else {
+        d3.select("#sighting-trend-graph-percent").style("display", DISPLAY_ON);
+        d3.select("#sighting-trend-graph-percent-explanation").text("This may be a better indicator of birds' prevalence, since bird watcher activity varies day-to-day");
+
+        // Build a similar chart based on percent of total -- which requires a new query since the first was filtered by name
+        let totalCounts;
+
         // Do the query WITHOUT the name filter to get all sightings per day
         await d3.json(baseQueryUrl).then(function (unfilteredResponse) {
           totalCounts = unfilteredResponse.counts;
         });
+
+        // Calculate the percentages
+        let filteredPercentages = [];
+        for (i = 0; i < filteredResponse.counts.length; i++) {
+          filteredPercentages.push(filteredResponse.counts[i] / totalCounts[i]);
+        }
+
+        let filteredName = filterSpecies == "" ? "genus" : "species";
+
+        let filteredPercentTrace = {
+          x: dates,
+          y: filteredPercentages,
+          type: "line",
+          name: filteredName,
+        };
+
+        let percentData = [filteredPercentTrace];
+
+        if (filterSpecies != "") {
+          // The original search was for a full species name, so we can search for just the genus
+          // and get another set of interesting counts
+          let genusPercentages = [];
+
+          // Do the query WITHOUT the name filter to get all sightings per day
+          await d3.json(`${baseQueryUrl}/${filterGenus}`).then(function (genusResponse) {
+            for (i = 0; i < genusResponse.counts.length; i++) {
+              genusPercentages.push(genusResponse.counts[i] / totalCounts[i]);
+            }
+          });
+
+          let genusPercentTrace = {
+            x: dates,
+            y: genusPercentages,
+            type: "line",
+            name: "genus",
+          };
+          percentData.push(genusPercentTrace);
+        }
+
+        let percentLayout = {
+          title: "Percent of Total Sightings",
+          xaxis: {
+            title: "Date",
+          },
+          yaxis: {
+            title: "Sighting (%)",
+            tickformat: ",.2%",
+            rangemode: "tozero",
+          },
+          showlegend: true,
+        };
+
+        Plotly.newPlot(
+          "sighting-trend-graph-percent",
+          percentData,
+          percentLayout,
+          { responsive: true }
+        );
       }
-
-      // Calculate the percentages
-      let percentages = [];
-      for (i=0; i<filteredResponse.counts.length; i++)
-      {
-        percentages.push(filteredResponse.counts[i] / totalCounts[i]);
-      }
-
-      let percentTrace = {
-        x: dates,
-        y: percentages,
-        type: 'line',
-      };
-      
-      let percentData = [percentTrace];
-      
-      let percentLayout = {
-        title: 'Percent of Total Sightings',
-        xaxis: {
-          title: 'Date',
-        },
-        yaxis: {
-          title: 'Sighting (%)',
-          tickformat: ',.2%',
-          rangemode: 'tozero',
-        },
-        showlegend: false,
-      };
-
-      Plotly.newPlot('sighting-trend-graph-percent', percentData, percentLayout, {responsive: true});
 
       loadingTrends = false;
       checkControlStates();
-});
+    }
+  );
 }
 
 function toggleView() {
@@ -398,8 +473,7 @@ function toggleView() {
   if (buttonElement.text() == TOGGLE_BUTTON_GRAPHS) {
     // Change to Graph view
     buttonElement.text(TOGGLE_BUTTON_MAP);
-  }
-  else {
+  } else {
     // Change to  Map view
     buttonElement.text(TOGGLE_BUTTON_GRAPHS);
   }
@@ -411,7 +485,7 @@ function abortLoad() {
   aborting = true;
 }
 
-function changeGenus(genusSelector) { 
+function changeGenus(genusSelector) {
   // When a new genus is selected, the species selector needs to be reset
   let speciesSelector = d3.select("#species-picker");
   speciesSelector.selectAll("option").remove();
@@ -419,14 +493,14 @@ function changeGenus(genusSelector) {
   // Refill the species select with species associated with the new genus
   names = genusSpeciesMap.get(genusSelector.value);
   console.log(`Changing to genus ${genusSelector.value} -> ${names}`);
-  speciesSelector.append("option").text("").property('value', "")
-  names.forEach(name => {
-    speciesSelector.append("option").text(name).property('value', name)
-  })
+  speciesSelector.append("option").text("").property("value", "");
+  names.forEach((name) => {
+    speciesSelector.append("option").text(name).property("value", name);
+  });
 }
 
 async function initialize() {
-  console.log('Initializing');
+  console.log("Initializing");
 
   // Adding the tile layer
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -438,13 +512,13 @@ async function initialize() {
   myMap.addLayer(sightingMarkers);
 
   // Set up the toggle button
-  d3.select("#toggle-view").text(TOGGLE_BUTTON_DEFAULT)
+  d3.select("#toggle-view").text(TOGGLE_BUTTON_DEFAULT);
 
   // Fetching initial data from the API is asnchronous, but the sighting data depends on some other data
   // so there is an order dependency:
   await getStaticInfo();
-  await getAllBirds();  
-  console.log('Initialization complete');
+  await getAllBirds();
+  console.log("Initialization complete");
 }
 
 initialize();
