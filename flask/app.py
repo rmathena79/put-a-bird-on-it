@@ -1,5 +1,5 @@
 import numpy as np
-import sqlalchemy
+import datetime
 
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
@@ -148,9 +148,31 @@ def get_sighting_trend_date_name(min_date, max_date, namePrefix):
     # Results aren't initially in a very convenient form, so turn it into
     # a list of dates and a list of counts
     flattened = np.ravel(results, order="F")
-    dates = list(flattened[: len(flattened) // 2])
-    counts = list(flattened[-len(flattened) // 2 :])
-    results_dict = {"dates": dates, "counts": counts}
+    db_dates = list(flattened[: len(flattened) // 2])
+    db_counts = list(flattened[-len(flattened) // 2 :])
+
+    # We need to return data for every date in range, which means inserts 0's
+    # for dates that didn't have any sightings in the query results.
+    min_dt = datetime.datetime.strptime(min_date, "%Y-%m-%d").date()
+    max_dt = datetime.datetime.strptime(max_date, "%Y-%m-%d").date()
+
+    db_i = 0
+    final_dates = list(np.arange(min_dt, max_dt + datetime.timedelta(days=1)))
+    final_counts = []
+
+    for date in final_dates:
+        if db_dates[db_i] == date:
+            # We got a sighting count for this date from the database
+            final_counts.append(db_counts[db_i])
+            db_i += 1
+        else:
+            # We didn't get a count from the DB, so it's zero
+            final_counts.append(0)
+
+    # The date list was generated with a numpy type above, so now
+    # we need to convert to a more standard type:
+    final_dates = [date.astype(datetime.datetime) for date in final_dates]
+    results_dict = {"dates": final_dates, "counts": final_counts}
     response = jsonify(results_dict)
     return response
 

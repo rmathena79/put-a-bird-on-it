@@ -347,6 +347,13 @@ function applyFilters() {
 }
 
 async function drawSightingGraphs() {
+  /*!!!!!!!!!!!!!!!!!
+    This is handling dates wrong, because the API doesn't return 0 for no sightings. It just doesn't list that date.
+    To work with that API, this code needs to build a list of all dates in range and populate a list of counts,
+    putting in 0's where needed.
+
+    I suspect this will be easier to fix in the API.
+  */
   console.log("Populating sighting trend graphs");
 
   loadingTrends = true;
