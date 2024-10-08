@@ -46,8 +46,8 @@ def welcome():
         f"<li><B>/api/v1.0/count/&ltmin-date&gt/&ltmax-date&gt/&ltscientific-name&gt</B>: Get total number of sightings available in date range, matching name.</li>"
         f"<li><B>/api/v1.0/trend/&ltmin-date&gt/&ltmax-date&gt</B>: Get day-by-day number of sightings in date range. Sorted alphabetically.</li>"
         f"<li><B>/api/v1.0/trend/&ltmin-date&gt/&ltmax-date&gt/&ltscientific-name&gt</B>: Get day-by-day number of sightings in date range, matching name. Sorted alphabetically.</li>"
-        f"<li><B>/api/v1.0/sightings/&ltoffset&gt/&ltmin-date&gt/&ltmax-date&gt</B>: Get sightings data, offset as specified, within date range.</li>"
-        f"<li><B>/api/v1.0/sightings/&ltoffset&gt/&ltmin-date&gt/&ltmax-date&gt/&ltscientific-name&gt</B>: Get sightings data, offset as specified, within date range, matching name.</li>"
+        f"<li><B>/api/v1.0/sightings/&ltoffset&gt/&ltmin-date&gt/&ltmax-date&gt</B>: Get sightings data, offset as specified, within date range. Sorted by date.</li>"
+        f"<li><B>/api/v1.0/sightings/&ltoffset&gt/&ltmin-date&gt/&ltmax-date&gt/&ltscientific-name&gt</B>: Get sightings data, offset as specified, within date range, matching name. Sorted by date.</li>"
         f"</ul>"
         f"<h2>Usage Notes</h2>"
         f"<ul>"
@@ -185,13 +185,19 @@ def get_sightings_date(offset, min_date, max_date):
 @app.route("/api/v1.0/sightings/<offset>/<min_date>/<max_date>/<namePrefix>")
 def get_sightings_date_name(offset, min_date, max_date, namePrefix):
     with Session(engine) as session:
-        q = session.query(
-            sightings_tbl.common_name,
-            sightings_tbl.scientific_name,
-            sightings_tbl.latitude,
-            sightings_tbl.longitude,
-            sightings_tbl.observation_date,
-        ).filter(sightings_tbl.observation_date.between(min_date, max_date))
+        q = (
+            session.query(
+                sightings_tbl.id,
+                sightings_tbl.common_name, 
+                sightings_tbl.scientific_name,
+                sightings_tbl.latitude,
+                sightings_tbl.longitude,
+                sightings_tbl.observation_date,
+            )
+            .filter(sightings_tbl.observation_date.between(min_date, max_date))
+            .order_by(sightings_tbl.observation_date)
+            .order_by(sightings_tbl.id)
+        )
 
         if namePrefix != "":
             # Filter by name

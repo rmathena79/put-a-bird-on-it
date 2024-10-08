@@ -64,7 +64,6 @@ PROBLEMS TO SOLVE BEFORE SUBMISSION
 * ...
 
 LESSER PROBLEMS
-* I think some sightings are getting plotted to the map twice
 * It's very beige.
 * If you're looking at stats and resize the window, then switch to map, it gets messed up
 * I suspect there are still some time zone problems lurking in the graph generation code
