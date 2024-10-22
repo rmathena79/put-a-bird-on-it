@@ -1,15 +1,16 @@
+import os
+
+from flask import Flask, request, render_template, redirect, url_for, jsonify
 import numpy as np
 import datetime
 
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
-from flask import Flask, jsonify
 
 from credentials import SERVER, PORT, USER, PASSWORD, DATABASE
 
 MAX_SIGHTINGS = 3333
-
 
 # Set up connection to database
 engine = create_engine(f"postgresql://{USER}:{PASSWORD}@{SERVER}:{PORT}/{DATABASE}")
@@ -219,6 +220,13 @@ def get_ids(session, namePrefix):
     ids = [result[0] for result in idResults]
     return ids
 
+
+# This comes from a generated passenger_wsgi.py file, and I don't really understand what it's all for:
+project_root = os.path.dirname(os.path.realpath('__file__'))
+template_path = os.path.join(project_root, 'app/templates')
+static_path = os.path.join(project_root, 'app/static')
+app = Flask(__name__, template_folder=template_path, static_folder=static_path)
+application = app
 
 if __name__ == "__main__":
     app.run(debug=True)
