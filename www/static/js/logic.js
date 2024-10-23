@@ -1,5 +1,6 @@
-// Store the API query variables.
-let baseURL = "http://127.0.0.1:5000/api/v1.0";
+// To allow flexibility during development or deployment, the API server address
+// should come from another file, in this form:
+// let baseURL = "http://127.0.0.1:5000/api/v1.0";
 
 // More-or-less unchanging values we get as the page first loads:
 let cnamesByID = new Map();

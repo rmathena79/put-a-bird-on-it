@@ -38,6 +38,10 @@ In addition to a standard "dev" environment from class, you'll need to install p
         DATABASE = "ebird_board"
         
 1. Launch the Flask API, generally by going to the flask directory in your terminal and running either "python app.py" or "flask run". Note I have only been running it in development mode.
+1. Create a www/static/address.js file so the web page knows where to connect to the Flask API. This is an example:
+
+        let baseURL = "http://127.0.0.1:5000/api/v1.0";
+        
 1. Launch a web server using the www directory as it's root. I've just been using VSCode Live Server to launch index.html.
 
 
@@ -69,8 +73,9 @@ TODO FOR DEPLOYMENT
 * [X] Clone the repo to the server
 * [X] Upgrade Python
 * [X] Get the Flask app running
-* [ ] Figure out deployment and update process
+* [X] Figure out deployment and update process
 * [ ] Modify the node.js web server to load the bird page, including relative paths for referenced files
+* [ ] Get the web page to talk to the right address for API calls
 * [ ] Limit search size
 * [ ] Break up the sightings CSV
 * [ ] Remove previous mini-import and import the full sightings database
@@ -80,3 +85,12 @@ TODO
 * Clean up graph generation code
 * Make Enter work for applying filters
 * Ideally eBird citation data should come from the database, since it could vary depending on dataset.
+
+DEPLOYMENT (server specific)
+1. Get into cPanel
+1. Open terminal
+1. cd put-a-bird-on-it
+1. git pull
+1. cp -r flask/* ../flaskapp
+1. cp -r www/* ../aroot/static/birds
+1. Restart Python app
