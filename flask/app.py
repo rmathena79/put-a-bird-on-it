@@ -105,6 +105,7 @@ def get_sighting_count_date(min_date, max_date):
 
 @app.route("/api/v1.0/count/<min_date>/<max_date>/<namePrefix>")
 def get_sighting_count_date_name(min_date, max_date, namePrefix):
+    namePrefix = namePrefix.replace("%20", " ")
     with Session(engine) as session:
         q = session.query(
             sightings_tbl.common_name,
@@ -130,6 +131,7 @@ def get_sighting_trend_date(min_date, max_date):
 
 @app.route("/api/v1.0/trend/<min_date>/<max_date>/<namePrefix>")
 def get_sighting_trend_date_name(min_date, max_date, namePrefix):
+    namePrefix = namePrefix.replace("%20", " ")
     with Session(engine) as session:
         q = (
             session.query(
@@ -187,6 +189,7 @@ def get_sightings_date(offset, min_date, max_date):
 
 @app.route("/api/v1.0/sightings/<offset>/<min_date>/<max_date>/<namePrefix>")
 def get_sightings_date_name(offset, min_date, max_date, namePrefix):
+    namePrefix = namePrefix.replace("%20", " ")
     with Session(engine) as session:
         q = (
             session.query(
@@ -214,6 +217,7 @@ def get_sightings_date_name(offset, min_date, max_date, namePrefix):
 
 
 def get_ids(session, namePrefix):
+    namePrefix = namePrefix.replace("%20", " ")
     idResults = (
         session.query(snames_tbl.id)
         .filter(snames_tbl.scientific_name.startswith(namePrefix))
