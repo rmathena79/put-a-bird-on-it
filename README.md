@@ -56,7 +56,6 @@ Multiple elements link to pages from Animal Diversity Web (https://animaldiversi
 
 SIGNIFICANT PROBLEMS
 * Layout is not remotely usable on mobile or small screens
-* Search can fail, seemingly only in the production environment
 * When an API call fails, the page doesn't handle it nicely
 * Only tested with Chrome
 
@@ -78,12 +77,13 @@ TODO FOR DEPLOYMENT
 * [X] Get the Flask app running
 * [X] Figure out deployment and update process
 * [X] Modify the node.js web server to load the bird page, including relative paths for referenced files
-* [ ] Fix the search for genus+species; maybe the server isn't handling spaces right in the new environment
+* [X] Fix the search for genus+species; maybe the server isn't handling spaces right in the new environment
 * [X] Get the web page to talk to the right address for API calls
-* [ ] Limit search size
+* [X] Limit search size, show message when too big
+* [X] Set up a default search that fits within that size limit
 * [X] Break up the sightings CSV
 * [X] Remove previous mini-import and import the full sightings database
-* [ ] Deployment script
+* [X] Deployment script
 * [ ] Change domain name
 
 TODO

@@ -37,8 +37,15 @@ const TOGGLE_BUTTON_GRAPHS = "Statistics";
 const TOGGLE_BUTTON_MAP = "Map";
 const TOGGLE_BUTTON_DEFAULT = TOGGLE_BUTTON_GRAPHS;
 
+// Values for element visibility control
 const DISPLAY_ON = "block";
 const DISPLAY_OFF = "none";
+
+// The production environment is quite slow, and the architecture currently requires
+// downloading ALL sightings in range. So limit the search result size.
+//
+// This makes me sad.
+const SEARCH_LIMIT = 30000;
 
 // Used to indicate when the page is downloading data
 let loadingSightings = true;
@@ -105,9 +112,9 @@ async function getStaticInfo() {
     d3.select("#min-overall-date").text(simpleDateFormat(min_date));
     d3.select("#max-overall-date").text(simpleDateFormat(max_date));
 
-    // Initially, show a week's worth of data
+    // Initially, show a few days' worth of data
     filterEndDate = max_date;
-    filterStartDate = addDays(max_date, -7);
+    filterStartDate = addDays(max_date, -3);
 
     console.log("Setting up date pickers");
     minPicker = datepicker("#min-date-picker", {
@@ -264,14 +271,41 @@ function getSightingsURL(offset) {
 
 async function getAllBirds() {
   console.log("Getting all bird sightings");
+
+  // We might not actually do the search if it's too big. So get the count from the server.
+  // Get the count of sightings first so the display shows reasonable values
+  // The URL must always include dates, but may or may not include a name:
+  dates = getFormattedQueryDates();
+  countURL = `${baseURL}/count/${dates.get("min")}/${dates.get("max")}`;
+  if (getFullNameFilter() != "") {
+    countURL += `/${getFullNameFilter()}`;
+  }
+  let nextCount = 0;
+  await d3.json(countURL).then(function (response) {
+    nextCount = response;
+  });
+
+  console.log(`Expected search results: ${nextCount}`);
+  if (nextCount > SEARCH_LIMIT) {
+    d3.select("#search-error").style("display", DISPLAY_ON);
+    d3.select("#refused-search-count").text(nextCount);
+    d3.select("#max-search-count").text(SEARCH_LIMIT);
+    refused-search-count
+    console.log("Search too big");
+    return;
+  }  
+  // Else it's OK to continue the search
+  d3.select("#search-error").style("display", DISPLAY_OFF);
+
   sightingMarkers.clearLayers();
   totalCount = 0;
 
-  // Update displays to describe the current search
-  dates = getFormattedQueryDates();
+  // Update displays to describe the current search  
   d3.select("#current-count").text(totalCount);
   d3.select("#min-current-date").text(dates.get("min"));
   d3.select("#max-current-date").text(dates.get("max"));
+  d3.select("#max-current-count").text(nextCount);
+  filteredCount = nextCount;
 
   // The genus name, if there is one, links to more info
   d3.select("#current-genus-filter").html(null);
@@ -287,23 +321,10 @@ async function getAllBirds() {
     d3.select("#current-species-filter").html(null).append("A").property("href", infoLink).text(filterSpecies);
   }
 
-  // Get the count of results for our imminent search. The URL must always include dates,
-  // but may or may not include a name:
-  countURL = `${baseURL}/count/${dates.get("min")}/${dates.get("max")}`;
-  if (getFullNameFilter() != "") {
-    countURL += `/${getFullNameFilter()}`;
-  }
-
   // Indicate that we'll be loading data
   loadingSightings = true;
   setLoadProgress(0);
   checkControlStates();
-
-  // Get the count of sightings first so the display shows reasonable values
-  await d3.json(countURL).then(function (response) {
-    d3.select("#max-current-count").text(response);
-    filteredCount = response;
-  });
 
   // The sighting trend graph can populate asynchronously to getting the individual sighting data:
   let graphPromise = drawSightingGraphs();
@@ -348,13 +369,6 @@ function applyFilters() {
 }
 
 async function drawSightingGraphs() {
-  /*!!!!!!!!!!!!!!!!!
-    This is handling dates wrong, because the API doesn't return 0 for no sightings. It just doesn't list that date.
-    To work with that API, this code needs to build a list of all dates in range and populate a list of counts,
-    putting in 0's where needed.
-
-    I suspect this will be easier to fix in the API.
-  */
   console.log("Populating sighting trend graphs");
 
   loadingTrends = true;

@@ -161,18 +161,24 @@ def get_sighting_trend_date_name(min_date, max_date, namePrefix):
     min_dt = datetime.datetime.strptime(min_date, "%Y-%m-%d").date()
     max_dt = datetime.datetime.strptime(max_date, "%Y-%m-%d").date()
 
-    db_i = 0
     final_dates = list(np.arange(min_dt, max_dt + datetime.timedelta(days=1)))
-    final_counts = []
 
-    for date in final_dates:
-        if db_dates[db_i] == date:
-            # We got a sighting count for this date from the database
-            final_counts.append(db_counts[db_i])
-            db_i += 1
-        else:
-            # We didn't get a count from the DB, so it's zero
-            final_counts.append(0)
+    # If we actually got any results, we need to iterate through them to fill
+    # in the final structures:
+    if (len(flattened) > 0):
+        db_i = 0
+        final_counts = []
+        for date in final_dates:
+            if db_i < len(db_dates) and db_dates[db_i] == date:
+                # We got a sighting count for this date from the database
+                final_counts.append(db_counts[db_i])
+                db_i += 1
+            else:
+                # We didn't get a count from the DB, so it's zero
+                final_counts.append(0)
+    else:
+        # No results -- zero out the counts
+        final_counts = [0] * len(final_dates)
 
     # The date list was generated with a numpy type above, so now
     # we need to convert to a more standard type:

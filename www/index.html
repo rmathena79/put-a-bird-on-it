@@ -35,7 +35,7 @@
         <div style="padding: 5px"> <!-- I don't know why I need a separate div here to get space around the text -->
           <P>Search below to plot bird sightings on the map. If you specify a genus or species you will also be able to see statistics about that group's prevalence among bird watchers' reports.</P>
           <P>The database is loaded with <span id="max-overall-count">[]</span> bird sightings in Oregon, from <span id="min-overall-date">[]</span> to <span id="max-overall-date">[]</span></P>
-          <div id="filter-controls" style="opacity: 100%; margin: 3%;">
+          <div id="filter-controls" style="margin: 3%;">
             <table>
             <tr><td><label for="min-date-picker">Start Date</label></td><td><input type="text" id="min-date-picker" name="min-date-picker" readonly="True"/></td></tr>
             <tr><td><label for="max-date-picker">End Date</label></td><td><input type="text" id="max-date-picker" name="max-date-picker" readonly="True"/></td></tr>
@@ -47,7 +47,15 @@
             <button id="toggle-view" onclick="toggleView()" style="width: 40%;">This space intentionally left blank</button>
           </div>
         </div>
-        <hr/>
+        <div id="search-error" style="display: none;">
+          <hr/>
+          <div style="margin: 3%;">
+            <P><B style="color:red">Search refused</B>; would return <span id="refused-search-count">[]</span> sightings, exceeding maximum of <span id="max-search-count">[]</span></P>
+            <P>The current implementation retrieves all sightings from the server. Given the inexpensive server resources and potentially large number of results, searches are limited.</P>
+            <P>Please reduce your timespan genus/species selection for a more specific search.</P>
+          </div>              
+        </div>
+      <hr/>
         <div style="padding: 5px">
           <P>Currently displayed results are based on this search:</P>
           <table style="margin: 3%;">
